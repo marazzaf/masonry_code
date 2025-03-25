@@ -18,4 +18,4 @@ points = pts.reshape((N,d))
 G = GranularMaterial(points, d)
 
 #G.plot_graph()
-G.plot_voronoi()
+#G.plot_voronoi()
