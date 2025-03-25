@@ -15,6 +15,7 @@ N = 20 #20
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
 
-G = GranularMaterial(points)
+G = GranularMaterial(points, d)
 
-G.plot_graph()
+#G.plot_graph()
+G.plot_voronoi()
