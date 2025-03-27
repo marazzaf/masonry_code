@@ -6,18 +6,23 @@ from energy import *
 
 #Fixing seed
 #np.random.seed(seed=136985)
+np.random.seed(seed=1568798)
 
 #Material parameter for friction
 s = 1
 
 #Getting the points
 d = 2 #Space dimension
-N = 1000 #20
+N = 503 #1000 #20
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
 
 #Creating the GranularMaterial
 GM = GranularMaterial(points, d, s)
+
+#GM.plot_graph()
+#GM.plot_voronoi()
+#sys.exit()
 
 #Creating a force on the boundary cells
 force_bnd = np.zeros((d,len(GM.bnd)))

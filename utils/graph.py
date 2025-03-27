@@ -16,9 +16,10 @@ class GranularMaterial:
     def fill_graph(self):
         self.fill_cells()
         self.fill_edges()
+        self.identify_bnd_cells()
+        self.clean_graph()
         self.compute_edge_quantities()
         self.compute_cell_quantities()
-        self.identify_bnd_cells()
 
     def fill_cells(self): #Selecting only the points that fall into [.25,.75] x [.25,.75]
         thrash = []
@@ -30,21 +31,22 @@ class GranularMaterial:
         to_keep = set(range(len(self.voronoi.points))) - set(thrash)
         to_keep = list(to_keep)
         self.graph.add_nodes_from(to_keep) #Adding nodes to the graph
-        self.Nc = len(self.graph.nodes) #Number of cells
+        #self.Nc = len(self.graph.nodes) #Number of cells
 
     def fill_edges(self):
-        i = 0
+        #i = 0
         for id_ridge in range(len(self.voronoi.ridge_points)):
             if (int(self.voronoi.ridge_points[id_ridge][0]) in self.graph.nodes) and not (int(self.voronoi.ridge_points[id_ridge][1]) in self.graph.nodes):
                 self.bnd.add(int(self.voronoi.ridge_points[id_ridge][0]))
             elif not (int(self.voronoi.ridge_points[id_ridge][0]) in self.graph.nodes) and (int(self.voronoi.ridge_points[id_ridge][1]) in self.graph.nodes):
                 self.bnd.add(int(self.voronoi.ridge_points[id_ridge][1]))
             elif (int(self.voronoi.ridge_points[id_ridge][0]) in self.graph.nodes) and (int(self.voronoi.ridge_points[id_ridge][1]) in self.graph.nodes):
-                self.graph.add_edge(self.voronoi.ridge_points[id_ridge][0], self.voronoi.ridge_points[id_ridge][1], id_ridge=id_ridge, id_edge=i)
-                i += 1
-        self.Ne = len(self.graph.edges) #Number of edges
+                self.graph.add_edge(self.voronoi.ridge_points[id_ridge][0], self.voronoi.ridge_points[id_ridge][1], id_ridge=id_ridge) #, id_edge=i)
+                #i += 1
+        #self.Ne = len(self.graph.edges) #Number of edges
 
     def compute_edge_quantities(self):
+        i = 0 #Numbering for minimizing the energy
         for c1,c2 in self.graph.edges:
             verts = self.voronoi.ridge_vertices[self.graph[c1][c2]['id_ridge']]
             t = self.voronoi.vertices[verts[0]] - self.voronoi.vertices[verts[1]]
@@ -54,6 +56,8 @@ class GranularMaterial:
             self.graph[c1][c2]['bary'] = .5 * self.voronoi.vertices[verts].sum(axis=0)
             self.graph[c1][c2]['tangent'] = t / length
             self.graph[c1][c2]['normal'] = np.array((-self.graph[c1][c2]['tangent'][1], self.graph[c1][c2]['tangent'][0]))
+            self.graph[c1][c2]['id_edge'] = i
+            i += 1
 
     def compute_cell_quantities(self):
         for c1 in self.graph.nodes:
@@ -91,3 +95,16 @@ class GranularMaterial:
                 pts = self.voronoi.points[c]
                 plt.plot(pts[0], pts[1], 'bx')
         plt.show()
+
+    def clean_graph(self): #Removes boundary cells that are only connected to boundary cells
+        clean_bnd = self.bnd.copy()
+        for c1 in self.bnd:
+            test = True
+            for c2 in self.graph.neighbors(c1):
+                test = test and self.graph.nodes[c2]['bnd']
+            if test:
+                self.graph.remove_node(c1)
+                clean_bnd.remove(c1)
+        self.bnd = clean_bnd.copy()
+        self.Nc = len(self.graph.nodes) #Number of cells
+        self.Ne = len(self.graph.edges) #Number of edges

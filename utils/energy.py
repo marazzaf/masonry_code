@@ -1,6 +1,7 @@
 from graph import GranularMaterial
 from cvxopt import solvers,matrix,spmatrix
 import numpy as np
+import sys
 
 class Energy:
     def __init__(self, GM, force_bnd): #GM is a GranularMaterial
@@ -65,5 +66,11 @@ class Energy:
 
     def solve(self, d, Ne):
         sol = solvers.lp(self.E, self.G, self.h, self.A, self.b)
-        vec_sol = sol['x']
-        return np.array(vec_sol).reshape((Ne, d))
+        try:
+            assert sol['status'] == 'optimal'
+            vec_sol = sol['x']
+            return np.array(vec_sol).reshape((Ne, d))
+        except AssertionError:
+            print('No optimal result')
+            sys.exit()
+        

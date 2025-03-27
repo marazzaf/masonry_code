@@ -50,7 +50,9 @@ for id_cell in inner:
     G.nodes[id_cell]['bnd'] = False
 
 #Test
-print(G.graph)
+print(G)
+G.remove_node(12)
+print(G)
 
 #Plotting the graph
 nx.draw(G, with_labels=True)

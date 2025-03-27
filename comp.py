@@ -18,8 +18,8 @@ points = pts.reshape((N,d))
 
 GM = GranularMaterial(points, d, s)
 
-#G.plot_graph()
-#G.plot_voronoi()
+#GM.plot_graph()
+#GM.plot_voronoi()
 
 #Creating a force on the boundary cells
 force_bnd = np.zeros((d,len(GM.bnd)))
