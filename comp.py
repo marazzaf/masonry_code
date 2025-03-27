@@ -29,7 +29,7 @@ for c in GM.bnd:
     force_bnd[:,i] = GM.pos_bary - GM.voronoi.points[c] #vector pointing towards the barycenter
     i += 1
 
-#Assembking the system to minimize the energy
+#Assembling the system to minimize the energy
 E = Energy(GM, force_bnd)
 
 #Computing the foces

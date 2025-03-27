@@ -150,7 +150,7 @@ for c in bnd:
     i += 1
     
 #rhs equality constraints
-b = -force_bnd.T.flatten() #-
+b = -force_bnd.T.flatten()
 b = matrix(b, tc='d')
 #print(b)
 
