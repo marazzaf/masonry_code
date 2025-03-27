@@ -2,6 +2,7 @@ import numpy as np
 import sys
 sys.path.append('./utils')
 from graph import *
+from energy import *
 
 #Fixing seed
 np.random.seed(seed=136985)
@@ -15,7 +16,21 @@ N = 20 #20
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
 
-G = GranularMaterial(points, d)
+GM = GranularMaterial(points, d, s)
 
 #G.plot_graph()
 #G.plot_voronoi()
+
+#Creating a force on the boundary cells
+force_bnd = np.zeros((d,len(GM.bnd)))
+i = 0
+for c in GM.bnd:
+    GM.graph.nodes[c]['id_cell'] = i
+    force_bnd[:,i] = GM.pos_bary - GM.voronoi.points[c] #vector pointing towards the barycenter
+    i += 1
+
+#Assembking the system to minimize the energy
+E = Energy(GM, force_bnd)
+
+#Computing the foces
+f = E.solve(d, GM.Ne)

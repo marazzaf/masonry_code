@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class GranularMaterial:
-    def __init__(self, points, d):
+    def __init__(self, points, d, s_T):
         self.d = d
+        self.s_T = s_T #tresca friction
         self.voronoi = Voronoi(points)
         self.graph = nx.Graph()
         self.bnd = set()
