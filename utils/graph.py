@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class GranularMaterial:
-    def __init__(self, points, d, s_T):
+    def __init__(self, points, d, s_T, L):
         self.d = d
         self.s_T = s_T #tresca friction
+        self.L = L #Size of square domain
         self.voronoi = Voronoi(points)
         self.graph = nx.Graph()
         self.bnd = set()
@@ -21,10 +22,10 @@ class GranularMaterial:
         self.compute_edge_quantities()
         self.compute_cell_quantities()
 
-    def fill_cells(self): #Selecting only the points that fall into [.25,.75] x [.25,.75]
+    def fill_cells(self): #Selecting only the points that fall into [L/4,3*L/4] x [L/4,3*L/4]
         thrash = []
         for id_cell in range(len(self.voronoi.points)):
-            if self.voronoi.points[id_cell][0] < .25 or self.voronoi.points[id_cell][0] > .75 or self.voronoi.points[id_cell][1] < .25 or self.voronoi.points[id_cell][1] > .75:
+            if self.voronoi.points[id_cell][0] < .25*self.L or self.voronoi.points[id_cell][0] > .75*self.L or self.voronoi.points[id_cell][1] < .25*self.L or self.voronoi.points[id_cell][1] > .75*self.L:
                 thrash.append(id_cell)
 
         #Cells to keep

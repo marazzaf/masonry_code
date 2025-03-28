@@ -4,19 +4,36 @@ import matplotlib.pyplot as plt
 import sys
 
 #Fixing seed
-np.random.seed(seed=136985)
+#np.random.seed(seed=136985)
+
 
 #Getting the points
-N = 20 #20
-pts = uniform.rvs(size=2*N) * 2
-points = pts.reshape((N,2))
+N = 5 #20
+theta = uniform.rvs(size=N) * np.pi * 2
+r = uniform.rvs(size=N)
+points = np.array(r*[np.cos(theta), np.sin(theta)]).T
+
+#print(points.shape)
+#print(points)
+#sys.exit()
 
 #Test
 #points = np.array([[.45, .45], [1.55, .45], [.45, 1.55], [1.55, 1.55], [.5, .5]])
+aux = np.linspace(0, 1, N, endpoint=True)
+from itertools import product
+points = list(product(aux, aux))
 
 #Computing the Voronoi mesh
 from scipy.spatial import Voronoi, voronoi_plot_2d
 vor = Voronoi(points)
+
+#plotting the Voronoi mesh
+fig = voronoi_plot_2d(vor)
+#plt.xlim(0.5,1.5)
+#plt.ylim(0.5,1.5)
+plt.show()
+
+sys.exit()
 
 #Selecting only the points that fall into [.5,1.5] x [.5,1.5]
 thrash = []
@@ -40,13 +57,6 @@ for id_edge in range(len(vor.ridge_points)):
 print(bnd)
 
 inner = set(to_keep) - bnd #set of inner cells
-
-import networkx as nx
-G = nx.Graph()
-G.add_nodes_from(to_keep)
-nx.draw(G, with_labels=True)
-plt.show()
-sys.exit()
 
 #plotting the Voronoi mesh
 fig = voronoi_plot_2d(vor)

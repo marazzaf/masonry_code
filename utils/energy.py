@@ -65,7 +65,7 @@ class Energy:
         self.A = matrix(A.T, tc='d')
 
     def solve(self, d, Ne):
-        sol = solvers.lp(self.E, self.G, self.h, self.A, self.b)
+        sol = solvers.lp(self.E, self.G, self.h, self.A, self.b, solver='glpk')
         try:
             assert sol['status'] == 'optimal'
             vec_sol = sol['x']

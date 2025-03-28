@@ -6,19 +6,27 @@ from energy import *
 
 #Fixing seed
 #np.random.seed(seed=136985)
-np.random.seed(seed=1568798)
+np.random.seed(seed=1568798) #Pb between 502 and 503
 
 #Material parameter for friction
 s = 1
 
-#Getting the points
+#Space parameters
 d = 2 #Space dimension
-N = 503 #1000 #20
-pts = np.random.uniform(size=d*N)
+N = 200 #20
+
+#Getting the points
+L = 1 #N // 100
+pts = np.random.uniform(size=d*N) * L
 points = pts.reshape((N,d))
 
+#Test
+aux = np.linspace(0, 1, N, endpoint=True)
+from itertools import product
+points = list(product(aux, aux))
+
 #Creating the GranularMaterial
-GM = GranularMaterial(points, d, s)
+GM = GranularMaterial(points, d, s, L)
 
 #GM.plot_graph()
 #GM.plot_voronoi()
