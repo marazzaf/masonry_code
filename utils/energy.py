@@ -65,12 +65,13 @@ class Energy:
         self.A = matrix(A.T, tc='d')
 
     def solve(self, d, Ne):
-        sol = solvers.lp(self.E, self.G, self.h, self.A, self.b, solver='glpk')
+        sol = solvers.lp(self.E, self.G, self.h, self.A, self.b) #, solver='glpk')
         try:
             assert sol['status'] == 'optimal'
             vec_sol = sol['x']
             return np.array(vec_sol).reshape((Ne, d))
         except AssertionError:
             print('No optimal result')
+            print(sol['primal infeasibility'])
             sys.exit()
         

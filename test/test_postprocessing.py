@@ -13,7 +13,7 @@ s = 1
 
 #Space parameters
 d = 2 #Space dimension
-N = 503 #20
+N = 500 #20
 
 #Getting the points
 L = 1 #N // 100
@@ -44,31 +44,36 @@ total_ext_force = force_bnd.sum(axis=1)
 #Assembling the system to minimize the energy
 E = Energy(GM, force_bnd)
 
-#Computing the foces
+#Computing the forces
 f = E.solve(d, GM.Ne)
 
-#Tolerance for force-balance
-eps = np.finfo(float).eps
+#Postprocessing
 
-#Checking that force balance is true on each cell
-G = GM.graph
-total_force = np.zeros(d)
-for c1 in G.nodes:
-    force_cell = np.zeros(d)
-    if G.nodes[c1]['bnd']: #bnd particle
-        id_cell = G.nodes[c1]['id_cell']
-        force_cell += force_bnd[:,id_cell] #Adding boundary force to the balance
-    for c2 in G.neighbors(c1): 
-        id_edge = G[c1][c2]['id_edge']
-        normal = G[c1][c2]['normal']
-        sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
-        sign /= abs(sign)
-        force_cell += sign * f[id_edge]
-    total_force += force_cell 
-    #print(G.nodes[c1]['bnd'])
-    #print(tot)
+#Plot
+import matplotlib.pyplot as plt
+x = np.zeros(GM.Nc)
+y = np.copy(x)
+z = np.copy(x)
+i = 0
+#Computing the ratios
+for c1 in GM.graph.nodes:
+    l1, l2, linf = 0,0,0
+    ratio = 0
+    for c2 in GM.graph.neighbors(c1):
+        id_edge = GM.graph[c1][c2]['id_edge']
+        l1 += np.linalg.norm(f[id_edge])
+        l2 += np.linalg.norm(f[id_edge])**2
+        linf = max(linf, np.linalg.norm(f[id_edge]))
+        ratio = l2 / l1 / linf
+    #print(GM.graph.nodes[c1]['bnd'])
+    #print(ratio)
+    pos = GM.voronoi.points[c1]
+    x[i] = pos[0]
+    y[i] = pos[1]
+    z[i] = ratio
+    i += 1
 
-try:
-    assert np.linalg.norm(total_force - total_ext_force) < eps
-except AssertionError:
-    print(np.linalg.norm(total_force - total_ext_force))
+#plot
+plt.scatter(x, y, c=z, cmap='jet', edgecolor='k', s=50)
+plt.colorbar()
+plt.show()

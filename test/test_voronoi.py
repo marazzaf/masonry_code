@@ -17,11 +17,11 @@ points = np.array(r*[np.cos(theta), np.sin(theta)]).T
 #print(points)
 #sys.exit()
 
-#Test
-#points = np.array([[.45, .45], [1.55, .45], [.45, 1.55], [1.55, 1.55], [.5, .5]])
-aux = np.linspace(0, 1, N, endpoint=True)
-from itertools import product
-points = list(product(aux, aux))
+##Test
+##points = np.array([[.45, .45], [1.55, .45], [.45, 1.55], [1.55, 1.55], [.5, .5]])
+#aux = np.linspace(0, 1, N, endpoint=True)
+#from itertools import product
+#points = list(product(aux, aux))
 
 #Computing the Voronoi mesh
 from scipy.spatial import Voronoi, voronoi_plot_2d
