@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class GranularMaterial:
-    def __init__(self, points, d, s_T, L):
+    def __init__(self, points, d, s_T=1., L=1.):
         self.d = d
         self.s_T = s_T #tresca friction
         self.L = L #Size of square domain
@@ -16,34 +16,43 @@ class GranularMaterial:
 
     def fill_graph(self):
         self.fill_cells()
-        self.fill_edges()
         self.identify_bnd_cells()
-        self.clean_graph()
-        self.compute_edge_quantities()
-        self.compute_cell_quantities()
+        self.identify_bad_edges()
+        self.fill_edges()
+        #self.clean_graph()
+        #self.compute_edge_quantities()
+        #self.compute_cell_quantities()
 
-    def fill_cells(self): #Selecting only the points that fall into [L/4,3*L/4] x [L/4,3*L/4]
-        thrash = []
-        for id_cell in range(len(self.voronoi.points)):
-            if self.voronoi.points[id_cell][0] < .25*self.L or self.voronoi.points[id_cell][0] > .75*self.L or self.voronoi.points[id_cell][1] < .25*self.L or self.voronoi.points[id_cell][1] > .75*self.L:
-                thrash.append(id_cell)
+    def fill_cells(self):
+        self.graph.add_nodes_from(range(len(self.voronoi.points)))
+        self.Nc = len(self.graph.nodes) #Number of cells           
 
-        #Cells to keep
-        to_keep = set(range(len(self.voronoi.points))) - set(thrash)
-        to_keep = list(to_keep)
-        self.graph.add_nodes_from(to_keep) #Adding nodes to the graph
-        #self.Nc = len(self.graph.nodes) #Number of cells
+    def identify_bnd_cells(self):
+        self.id_bad_vertices = set()
+        for c in range(self.Nc):
+            region = self.voronoi.point_region[c]
+            #Check if one vertex of the voronoi cell is outside the cube
+            for id_vert in self.voronoi.regions[region]:
+                pos_vert = self.voronoi.vertices[id_vert]
+                if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
+                    self.bnd.add(c)
+                    self.id_bad_vertices.add(id_vert)
+
+    def identify_bad_edges(self):
+        self.id_bad_edges = set()
+        for id_edge in range(len(self.voronoi.ridge_points)):
+            list_vert = self.voronoi.ridge_vertices[id_edge]
+            if len(list_vert) == 1:
+                self.id_bad_edges.add(id_edge)
+            elif len(set(list_vert) & self.id_bad_vertices) > 0:
+                self.id_bad_edges.add(id_edge)
 
     def fill_edges(self):
-        #i = 0
-        for id_ridge in range(len(self.voronoi.ridge_points)):
-            if (int(self.voronoi.ridge_points[id_ridge][0]) in self.graph.nodes) and not (int(self.voronoi.ridge_points[id_ridge][1]) in self.graph.nodes):
-                self.bnd.add(int(self.voronoi.ridge_points[id_ridge][0]))
-            elif not (int(self.voronoi.ridge_points[id_ridge][0]) in self.graph.nodes) and (int(self.voronoi.ridge_points[id_ridge][1]) in self.graph.nodes):
-                self.bnd.add(int(self.voronoi.ridge_points[id_ridge][1]))
-            elif (int(self.voronoi.ridge_points[id_ridge][0]) in self.graph.nodes) and (int(self.voronoi.ridge_points[id_ridge][1]) in self.graph.nodes):
-                self.graph.add_edge(self.voronoi.ridge_points[id_ridge][0], self.voronoi.ridge_points[id_ridge][1], id_ridge=id_ridge) #, id_edge=i)
-                #i += 1
+        #Start with good edges
+        for id_edge in range(len(self.voronoi.ridge_points)):
+            if id_edge not in self.id_bad_edges:
+                list_points = self.voronoi.ridge_points[id_edge]
+                self.graph.add_edge(list_points[0], list_points[1])
         #self.Ne = len(self.graph.edges) #Number of edges
 
     def compute_edge_quantities(self):
@@ -69,12 +78,7 @@ class GranularMaterial:
                 area += .5 * np.absolute(np.cross(self.voronoi.vertices[verts[0]] - self.voronoi.vertices[verts[1]], self.voronoi.vertices[verts[0]] - self.voronoi.points[c1]))
             self.graph.nodes[c1]['area'] = area
 
-    def identify_bnd_cells(self):
-        for c in self.graph.nodes:
-            if c in self.bnd:
-                self.graph.nodes[c]['bnd'] = True
-            else:
-                self.graph.nodes[c]['bnd'] = False
+    
 
     def bary_domain(self):
         pos_bary = np.zeros(self.d)

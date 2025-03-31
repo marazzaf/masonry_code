@@ -4,20 +4,24 @@ import matplotlib.pyplot as plt
 import sys
 
 #Fixing seed
-#np.random.seed(seed=136985)
+np.random.seed(seed=136985)
 
+#Space parameters
+d = 2 #Space dimension
+N = 503 #20
 
 #Getting the points
+#Points inside a unit square
+pts = np.random.uniform(size=d*N)
+points = pts.reshape((N,d))
+
+#Points inside a unit ball
 N = 5 #20
 theta = uniform.rvs(size=N) * np.pi * 2
 r = uniform.rvs(size=N)
-points = np.array(r*[np.cos(theta), np.sin(theta)]).T
+#points = np.array(r*[np.cos(theta), np.sin(theta)]).T
 
-#print(points.shape)
-#print(points)
-#sys.exit()
-
-##Test
+##Grid
 ##points = np.array([[.45, .45], [1.55, .45], [.45, 1.55], [1.55, 1.55], [.5, .5]])
 #aux = np.linspace(0, 1, N, endpoint=True)
 #from itertools import product
@@ -29,8 +33,10 @@ vor = Voronoi(points)
 
 #plotting the Voronoi mesh
 fig = voronoi_plot_2d(vor)
-#plt.xlim(0.5,1.5)
-#plt.ylim(0.5,1.5)
+plt.xlim(0,1)
+plt.ylim(0,1)
+#plt.xlim(-5,5)
+#plt.ylim(-5,5)
 plt.show()
 
 sys.exit()
