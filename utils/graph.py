@@ -2,6 +2,7 @@ import networkx as nx
 from scipy.spatial import Voronoi,voronoi_plot_2d
 import matplotlib.pyplot as plt
 import numpy as np
+from cvxopt import solvers,matrix
 
 class GranularMaterial:
     def __init__(self, points, d, s_T=1., L=1.):
@@ -75,17 +76,42 @@ class GranularMaterial:
         plt.show()
 
     def plot_voronoi(self):
-        fig = voronoi_plot_2d(self.voronoi)
+        voronoi_plot_2d(self.voronoi)
         plt.show()
 
     def compute_missing_vertices(self):
         for c1 in self.bnd:
+            #Contains at least one vertex in the domain
+            list_vert_cell = self.voronoi.regions[c1+1]
+            list_good_vert_cell = set(list_vert_cell) - self.id_bad_vertices
+            assert len(list_good_vert_cell) > 0
+            #print(c1,list_good_vert)
             for c2 in self.graph.neighbors(c1):
                 id_ridge = self.graph[c1][c2]['id_ridge']
-                list_vert = self.voronoi.ridge_vertices[id_ridge]
-                intersection = set(list_vert) & self.id_bad_vertices
-                if len(intersection) > 0:
-                    print(intersection)
+                list_vert_edge = self.voronoi.ridge_vertices[id_ridge]
+                intersection = set(list_vert_edge) & list_good_vert_cell
+                if len(intersection) == 2: #All good
+                    pass
+                elif len(intersection) == 1: #Recompute the bad one
+                    (id_bad_vert,) = set(list_vert_edge) - intersection
+                    (id_good_vert,) = intersection
+                    pos_good_vert = self.voronoi.vertices[id_good_vert]
+                    normal = self.graph[c1][c2]['normal']
+                    pos_new_vert = compute_intersection(pos_good_vert, normal)
+                    #Plot
+                    voronoi_plot_2d(self.voronoi)
+                    plt.plot(pos_good_vert[0], pos_good_vert[1], 'bo')
+                    plt.plot(pos_new_vert[0], pos_new_vert[1], 'rx')
+                    plt.xlim(-2,3)
+                    plt.ylim(-2,3)
+                    plt.show()
+                    #if id_bad_vert != -1:
+                    #    pos_old_vert = self.voronoi.vertices[id_bad_vert]
+                    #    print(pos_old_vert,pos_new_vert)
+                    #else:
+                    #    print(pos_new_vert)
+                    
+            #        print(intersection)
                 #Check each point to see if in the domain or not
                 #for vert in list_vert:
                 #    if vert == -1:
@@ -206,6 +232,22 @@ class GranularMaterial:
         self.Nc = len(self.graph.nodes) #Number of cells
         self.Ne = len(self.graph.edges) #Number of edges
 
-def compute_intersection(d):
-    res = np.zeros(d)
+def compute_intersection(pt, normal): #Update this
+    #Write quadratic program to have a point on the boundary
+    # Define the coefficients of the objective function
+    P = matrix(np.eye(2), tc='d')
+    q = matrix(-pt, tc='d')
+
+    # Define the coefficients of the inequality constraints
+    G = matrix([[1, 0], [-1.0, 0.], [0, 1], [0,-1]]).T
+    h = matrix([0., 1., 0., 1.])
+
+    # Define the coefficients of the equality constraints
+    A = matrix(normal, tc='d').T
+    b = matrix(np.dot(pt, normal))
+
+    # Solve the quadratic optimization problem
+    solution = solvers.qp(P, q, G, h, A, b)
+    res = np.array(solution['x']).flatten()
+    
     return res
