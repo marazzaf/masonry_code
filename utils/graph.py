@@ -19,7 +19,7 @@ class GranularMaterial:
         self.fill_edges()
         self.identify_bad_vertices()
         self.identify_bnd_cells()
-        #self.compute_missing_vertices()
+        self.compute_missing_vertices()
         #self.compute_edge_quantities()
         #self.compute_cell_quantities()
 
@@ -38,22 +38,26 @@ class GranularMaterial:
             self.graph[c1][c2]['id_ridge'] = id_ridge
         self.Ne = len(self.graph.edges) #Number of edges
 
-    def identify_bnd_cells(self):
-        for c, list_vert in enumerate(self.voronoi.regions[1:]):
-            if -1 in list_vert:
-                self.bnd.add(c)
-            else:
-                for id_vert in list_vert:
-                    pos_vert = self.voronoi.vertices[id_vert]
-                    if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
-                        self.bnd.add(c)
-                        break
-
     def identify_bad_vertices(self):
         self.id_bad_vertices = {-1}
         for id_vert, pos_vert in enumerate(self.voronoi.vertices):
             if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
                 self.id_bad_vertices.add(id_vert)
+
+    def identify_bnd_cells(self):
+        for c, list_vert in enumerate(self.voronoi.regions[1:]):
+            if len(set(list_vert) & self.id_bad_vertices) > 0:
+                self.bnd.add(c)
+            #if -1 in list_vert:
+            #    self.bnd.add(c)
+            #else:
+            #    for id_vert in list_vert:
+            #        pos_vert = self.voronoi.vertices[id_vert]
+            #        if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
+            #            self.bnd.add(c)
+            #            break
+
+
 
     #def identify_bnd_cells(self):
     #    self.id_bad_vertices = set()
@@ -79,19 +83,25 @@ class GranularMaterial:
             for c2 in self.graph.neighbors(c1):
                 id_ridge = self.graph[c1][c2]['id_ridge']
                 list_vert = self.voronoi.ridge_vertices[id_ridge]
+                intersection = set(list_vert) & self.id_bad_vertices
+                if len(intersection) > 0:
+                    print(intersection)
                 #Check each point to see if in the domain or not
-                
-                #Check if one point is infinite
-                if -1 in list_vert:
-                    vert = set(list_vert) - {-1}
-                    pos_vert = self.voronoi.vertices[list(vert)[0]]
-                    #print(pos_vert)
-                    if pos_vert[0] > 0 and pos_vert[0] < 1 and pos_vert[1] > 0 and pos_vert[1] < 1:
-                        self.graph[c1][c2]['vertices'] = pos_vert #Adding the vertex not at infinity to the edge
-                    else:
-                        #Compute two vertices
-                        #They have to be aligned with the boundary?
-                        pass
+                #for vert in list_vert:
+                #    if vert == -1:
+                #        
+                #
+                ##Check if one point is infinite
+                #if -1 in list_vert:
+                #    vert = set(list_vert) - {-1}
+                #    pos_vert = self.voronoi.vertices[list(vert)[0]]
+                #    #print(pos_vert)
+                #    if pos_vert[0] > 0 and pos_vert[0] < 1 and pos_vert[1] > 0 and pos_vert[1] < 1:
+                #        self.graph[c1][c2]['vertices'] = pos_vert #Adding the vertex not at infinity to the edge
+                #    else:
+                #        #Compute two vertices
+                #        #They have to be aligned with the boundary?
+                #        pass
                     
                 
                 
