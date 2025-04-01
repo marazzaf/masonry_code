@@ -17,10 +17,9 @@ class GranularMaterial:
     def fill_graph(self):
         self.fill_cells()
         self.fill_edges()
+        self.identify_bad_vertices()
         self.identify_bnd_cells()
         #self.compute_missing_vertices()
-        #self.identify_bad_edges()
-        #self.compute_vertices()
         #self.compute_edge_quantities()
         #self.compute_cell_quantities()
 
@@ -29,17 +28,18 @@ class GranularMaterial:
         self.Nc = len(self.graph.nodes) #Number of cells           
 
     def fill_edges(self):
-        for id_edge in range(len(self.voronoi.ridge_points)):
-            list_points = self.voronoi.ridge_points[id_edge]
+        for id_ridge in range(len(self.voronoi.ridge_points)):
+            list_points = self.voronoi.ridge_points[id_ridge]
             self.graph.add_edge(list_points[0], list_points[1])
             c1,c2 = list_points
             normal = self.voronoi.points[c1] - self.voronoi.points[c2]
             self.graph[c1][c2]['normal'] = normal / np.linalg.norm(normal)
             self.graph[c1][c2]['tangent'] = np.array((-self.graph[c1][c2]['normal'][1], self.graph[c1][c2]['normal'][0]))
+            self.graph[c1][c2]['id_ridge'] = id_ridge
         self.Ne = len(self.graph.edges) #Number of edges
 
     def identify_bnd_cells(self):
-        for c, list_vert in enumerate(self.voronoi.regions):
+        for c, list_vert in enumerate(self.voronoi.regions[1:]):
             if -1 in list_vert:
                 self.bnd.add(c)
             else:
@@ -47,7 +47,13 @@ class GranularMaterial:
                     pos_vert = self.voronoi.vertices[id_vert]
                     if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
                         self.bnd.add(c)
-                
+                        break
+
+    def identify_bad_vertices(self):
+        self.id_bad_vertices = {-1}
+        for id_vert, pos_vert in enumerate(self.voronoi.vertices):
+            if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
+                self.id_bad_vertices.add(id_vert)
 
     #def identify_bnd_cells(self):
     #    self.id_bad_vertices = set()
@@ -68,8 +74,28 @@ class GranularMaterial:
         fig = voronoi_plot_2d(self.voronoi)
         plt.show()
 
-    #def compute_missing_vertices(self):
-    #    for c in self.id_bad_cells:
+    def compute_missing_vertices(self):
+        for c1 in self.bnd:
+            for c2 in self.graph.neighbors(c1):
+                id_ridge = self.graph[c1][c2]['id_ridge']
+                list_vert = self.voronoi.ridge_vertices[id_ridge]
+                #Check each point to see if in the domain or not
+                
+                #Check if one point is infinite
+                if -1 in list_vert:
+                    vert = set(list_vert) - {-1}
+                    pos_vert = self.voronoi.vertices[list(vert)[0]]
+                    #print(pos_vert)
+                    if pos_vert[0] > 0 and pos_vert[0] < 1 and pos_vert[1] > 0 and pos_vert[1] < 1:
+                        self.graph[c1][c2]['vertices'] = pos_vert #Adding the vertex not at infinity to the edge
+                    else:
+                        #Compute two vertices
+                        #They have to be aligned with the boundary?
+                        pass
+                    
+                
+                
+    #            print(self.voronoi.ridge_vertices[id_ridge])
     #        vertices_for_cell = []
     #        list_vert = list(set(self.voronoi.regions[c]) - {-1})
     #        for id_vert in list_vert:
