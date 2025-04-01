@@ -20,7 +20,9 @@ points = pts.reshape((N,d))
 
 #Creating the granular material
 GM = GranularMaterial(points, d)
-GM.plot_graph()
+#GM.plot_voronoi()
+#sys.exit()
+#GM.plot_graph()
 sys.exit()
 
 #Computing the Voronoi mesh

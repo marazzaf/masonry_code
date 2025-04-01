@@ -50,10 +50,24 @@ class GranularMaterial:
     def fill_edges(self):
         #Start with good edges
         for id_edge in range(len(self.voronoi.ridge_points)):
+                list_points = self.voronoi.ridge_points[id_edge]
+                self.graph.add_edge(list_points[0], list_points[1])
+                #Add the normal to the edge
+        self.Ne = len(self.graph.edges) #Number of edges
+
+    def compute_vertices(self):
+        for id_edge in range(len(self.voronoi.ridge_points)):
             if id_edge not in self.id_bad_edges:
                 list_points = self.voronoi.ridge_points[id_edge]
                 self.graph.add_edge(list_points[0], list_points[1])
+            elif id_edge in self.id_bad_edges:
+                list_vert = self.voronoi.ridge_vertices[id_edge]
+                pb_vert = set(list_vert) & self.id_bad_vertices
+                #for vert in pb_vert:
+                    #Recompute the new vertex as an intersection
+                #print(self.voronoi.vertices[list(pb_vert)])
         #self.Ne = len(self.graph.edges) #Number of edges
+        
 
     def compute_edge_quantities(self):
         i = 0 #Numbering for minimizing the energy
@@ -92,13 +106,6 @@ class GranularMaterial:
 
     def plot_voronoi(self):
         fig = voronoi_plot_2d(self.voronoi)
-        for c in self.graph.nodes:
-            if not self.graph.nodes[c]['bnd']:
-                pts = self.voronoi.points[c]
-                plt.plot(pts[0], pts[1], 'ro')
-            if self.graph.nodes[c]['bnd']:
-                pts = self.voronoi.points[c]
-                plt.plot(pts[0], pts[1], 'bx')
         plt.show()
 
     def clean_graph(self): #Removes boundary cells that are only connected to boundary cells
@@ -113,3 +120,7 @@ class GranularMaterial:
         self.bnd = clean_bnd.copy()
         self.Nc = len(self.graph.nodes) #Number of cells
         self.Ne = len(self.graph.edges) #Number of edges
+
+def compute_intersection(d):
+    res = np.zeros(d)
+    return res
