@@ -17,7 +17,8 @@ class GranularMaterial:
     def fill_graph(self):
         self.fill_cells()
         self.fill_edges()
-        #self.identify_bnd_cells()
+        self.identify_bnd_cells()
+        #self.compute_missing_vertices()
         #self.identify_bad_edges()
         #self.compute_vertices()
         #self.compute_edge_quantities()
@@ -36,17 +37,62 @@ class GranularMaterial:
             self.graph[c1][c2]['normal'] = normal / np.linalg.norm(normal)
             self.graph[c1][c2]['tangent'] = np.array((-self.graph[c1][c2]['normal'][1], self.graph[c1][c2]['normal'][0]))
         self.Ne = len(self.graph.edges) #Number of edges
-        
+
     def identify_bnd_cells(self):
-        self.id_bad_vertices = set()
-        for c in range(self.Nc):
-            region = self.voronoi.point_region[c]
-            #Check if one vertex of the voronoi cell is outside the cube
-            for id_vert in self.voronoi.regions[region]:
-                pos_vert = self.voronoi.vertices[id_vert]
-                if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
-                    self.bnd.add(c)
-                    self.id_bad_vertices.add(id_vert)
+        for c, list_vert in enumerate(self.voronoi.regions):
+            if -1 in list_vert:
+                self.bnd.add(c)
+            else:
+                for id_vert in list_vert:
+                    pos_vert = self.voronoi.vertices[id_vert]
+                    if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
+                        self.bnd.add(c)
+                
+
+    #def identify_bnd_cells(self):
+    #    self.id_bad_vertices = set()
+    #    for c in range(self.Nc):
+    #        region = self.voronoi.point_region[c]
+    #        #Check if one vertex of the voronoi cell is outside the cube
+    #        for id_vert in self.voronoi.regions[region]:
+    #            pos_vert = self.voronoi.vertices[id_vert]
+    #            if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
+    #                self.bnd.add(c)
+    #                self.id_bad_vertices.add(id_vert)
+
+    def plot_graph(self):
+        nx.draw(self.graph, with_labels=True)
+        plt.show()
+
+    def plot_voronoi(self):
+        fig = voronoi_plot_2d(self.voronoi)
+        plt.show()
+
+    #def compute_missing_vertices(self):
+    #    for c in self.id_bad_cells:
+    #        vertices_for_cell = []
+    #        list_vert = list(set(self.voronoi.regions[c]) - {-1})
+    #        for id_vert in list_vert:
+    #            pos_vert = self.voronoi.vertices[id_vert]
+    #            if pos_vert[0] > 0 and pos_vert[0] < 1 and pos_vert[1] > 0 and pos_vert[1] < 1:
+    #                vertices_for_cell.append(pos_vert)
+    #                
+    #        #What to do now?
+    #        #We have the vertices that work. We need the other ones
+    #        print(vertices_for_cell)
+    #        
+    #            
+    #        #elif id_edge in self.id_bad_edges:
+    #        #    list_vert = self.voronoi.ridge_vertices[id_edge]
+    #        #    #print(list_vert)
+    #        #    pb_vert = set(list_vert) & self.id_bad_vertices
+    #        #    #for vert in pb_vert:
+    #        #        #Recompute the new vertex as an intersection
+    #        #    #print(self.voronoi.vertices[list(pb_vert)])
+
+    #not correct after this
+        
+    
 
     def identify_bad_edges(self):
         self.id_bad_edges = set()
@@ -56,8 +102,6 @@ class GranularMaterial:
                 self.id_bad_edges.add(id_edge)
             elif len(set(list_vert) & self.id_bad_vertices) > 0:
                 self.id_bad_edges.add(id_edge)
-
-
 
     def compute_vertices(self):
         for id_edge in range(len(self.voronoi.ridge_points)):
@@ -111,13 +155,7 @@ class GranularMaterial:
             pos_bary += self.voronoi.points[c,:]
         self.pos_bary = pos_bary / self.Nc
         
-    def plot_graph(self):
-        nx.draw(self.graph, with_labels=True)
-        plt.show()
 
-    def plot_voronoi(self):
-        fig = voronoi_plot_2d(self.voronoi)
-        plt.show()
 
     def clean_graph(self): #Removes boundary cells that are only connected to boundary cells
         clean_bnd = self.bnd.copy()

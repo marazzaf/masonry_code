@@ -22,21 +22,15 @@ points = pts.reshape((N,d))
 GM = GranularMaterial(points, d)
 #print(GM.voronoi.regions)
 #print(GM.Nc)
-#GM.plot_voronoi()
+GM.plot_voronoi()
 #sys.exit()
 #GM.plot_graph()
 #sys.exit()
 
-for i, list_vert in enumerate(GM.voronoi.regions):
-    if -1 in list_vert:
-        print(i)
-
-sys.exit()
-
-#plotting the Voronoi mesh
-fig = voronoi_plot_2d(GM.voronoi)
-#plt.xlim(0,1)
-#plt.ylim(0,1)
-plt.xlim(-3,3)
-plt.ylim(-3,3)
-plt.show()
+##plotting the Voronoi mesh
+#fig = voronoi_plot_2d(GM.voronoi)
+##plt.xlim(0,1)
+##plt.ylim(0,1)
+#plt.xlim(-3,3)
+#plt.ylim(-3,3)
+#plt.show()
