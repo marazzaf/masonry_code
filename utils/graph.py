@@ -16,10 +16,10 @@ class GranularMaterial:
 
     def fill_graph(self):
         self.fill_cells()
-        self.identify_bnd_cells()
-        self.identify_bad_edges()
         self.fill_edges()
-        #self.clean_graph()
+        #self.identify_bnd_cells()
+        #self.identify_bad_edges()
+        #self.compute_vertices()
         #self.compute_edge_quantities()
         #self.compute_cell_quantities()
 
@@ -27,6 +27,16 @@ class GranularMaterial:
         self.graph.add_nodes_from(range(len(self.voronoi.points)))
         self.Nc = len(self.graph.nodes) #Number of cells           
 
+    def fill_edges(self):
+        for id_edge in range(len(self.voronoi.ridge_points)):
+            list_points = self.voronoi.ridge_points[id_edge]
+            self.graph.add_edge(list_points[0], list_points[1])
+            c1,c2 = list_points
+            normal = self.voronoi.points[c1] - self.voronoi.points[c2]
+            self.graph[c1][c2]['normal'] = normal / np.linalg.norm(normal)
+            self.graph[c1][c2]['tangent'] = np.array((-self.graph[c1][c2]['normal'][1], self.graph[c1][c2]['normal'][0]))
+        self.Ne = len(self.graph.edges) #Number of edges
+        
     def identify_bnd_cells(self):
         self.id_bad_vertices = set()
         for c in range(self.Nc):
@@ -47,21 +57,22 @@ class GranularMaterial:
             elif len(set(list_vert) & self.id_bad_vertices) > 0:
                 self.id_bad_edges.add(id_edge)
 
-    def fill_edges(self):
-        #Start with good edges
-        for id_edge in range(len(self.voronoi.ridge_points)):
-                list_points = self.voronoi.ridge_points[id_edge]
-                self.graph.add_edge(list_points[0], list_points[1])
-                #Add the normal to the edge
-        self.Ne = len(self.graph.edges) #Number of edges
+
 
     def compute_vertices(self):
         for id_edge in range(len(self.voronoi.ridge_points)):
             if id_edge not in self.id_bad_edges:
-                list_points = self.voronoi.ridge_points[id_edge]
-                self.graph.add_edge(list_points[0], list_points[1])
+                verts = self.voronoi.ridge_vertices[id_edge]
+                t = self.voronoi.vertices[verts[0]] - self.voronoi.vertices[verts[1]]
+                length = np.linalg.norm(t)
+                assert length < np.inf #Checking no edge has infinite length
+                c1,c2 = self.voronoi.ridge_points[id_edge]
+                self.graph[c1][c2]['length'] = length
+                self.graph[c1][c2]['bary'] = .5 * self.voronoi.vertices[verts].sum(axis=0)
+                
             elif id_edge in self.id_bad_edges:
                 list_vert = self.voronoi.ridge_vertices[id_edge]
+                #print(list_vert)
                 pb_vert = set(list_vert) & self.id_bad_vertices
                 #for vert in pb_vert:
                     #Recompute the new vertex as an intersection
