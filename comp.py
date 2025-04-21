@@ -12,7 +12,7 @@ s = 1
 
 #Getting the points
 d = 2 #Space dimension
-N = 4000 #20
+N = 20 #20
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
 
@@ -22,11 +22,21 @@ GM = GranularMaterial(points, d, s)
 #GM.plot_voronoi()
 
 #Creating a force on the boundary cells
+compression = 1e2 #compressive force
 force_bnd = np.zeros((d,len(GM.bnd)))
 i = 0
 for c in GM.bnd:
     GM.graph.nodes[c]['id_cell'] = i
-    force_bnd[:,i] = GM.pos_bary - GM.voronoi.points[c] #vector pointing towards the barycenter
+    #force_bnd[:,i] = GM.pos_bary - GM.voronoi.points[c] #vector pointing towards the barycenter
+    pos = GM.voronoi.points[c]
+    if pos[0] < .2:
+        force_bnd[:,i] = np.array([1, 0])
+    elif pos[0] > .8:
+        force_bnd[:,i] = -np.array([1, 0])
+    if pos[1] < .2:
+        force_bnd[:,i] += np.array([0, 1])
+    elif pos[1] > .8:
+        force_bnd[:,i] += compression * np.array([0, -1])
     i += 1
 
 #Assembling the system to minimize the energy

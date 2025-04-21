@@ -64,8 +64,7 @@ class GranularMaterial:
                 self.graph[c1][c2]['bary'] = .5 * self.voronoi.vertices[verts].sum(axis=0)
             else: #The force between boundary cells does not matter
                 self.graph[c1][c2]['length'] = 1
-                self.graph[c1][c2]['bary'] = self.voronoi.vertices[verts].sum(axis=0)
-                
+                self.graph[c1][c2]['bary'] = self.voronoi.vertices[verts].sum(axis=0)              
             self.graph[c1][c2]['id_edge'] = i
             i += 1
 
