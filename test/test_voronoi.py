@@ -33,8 +33,8 @@ vor = Voronoi(points)
 
 #plotting the Voronoi mesh
 fig = voronoi_plot_2d(vor)
-plt.xlim(0,1)
-plt.ylim(0,1)
+#plt.xlim(0,1)
+#plt.ylim(0,1)
 #plt.xlim(-5,5)
 #plt.ylim(-5,5)
 plt.show()

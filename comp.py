@@ -18,6 +18,14 @@ points = pts.reshape((N,d))
 
 GM = GranularMaterial(points, d, s)
 
+#Test
+import matplotlib.pyplot as plt
+voronoi_plot_2d(GM.voronoi)
+for c in GM.bnd:
+    pos = GM.voronoi.points[c]
+    plt.plot(pos[0], pos[1], 'ro')
+plt.show() 
+
 #GM.plot_graph()
 #GM.plot_voronoi()
 
@@ -32,5 +40,5 @@ for c in GM.bnd:
 #Assembling the system to minimize the energy
 E = Energy(GM, force_bnd)
 
-#Computing the foces
+#Computing the forces
 f = E.solve(d, GM.Ne)

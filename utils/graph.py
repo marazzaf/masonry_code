@@ -18,11 +18,9 @@ class GranularMaterial:
     def fill_graph(self):
         self.fill_cells()
         self.fill_edges()
-        self.identify_bad_vertices()
         self.identify_bnd_cells()
-        self.compute_missing_vertices()
+        self.compute_cell_quantities()
         #self.compute_edge_quantities()
-        #self.compute_cell_quantities()
 
     def fill_cells(self):
         self.graph.add_nodes_from(range(len(self.voronoi.points)))
@@ -39,37 +37,12 @@ class GranularMaterial:
             self.graph[c1][c2]['id_ridge'] = id_ridge
         self.Ne = len(self.graph.edges) #Number of edges
 
-    def identify_bad_vertices(self):
-        self.id_bad_vertices = {-1}
-        for id_vert, pos_vert in enumerate(self.voronoi.vertices):
-            if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
-                self.id_bad_vertices.add(id_vert)
-
     def identify_bnd_cells(self):
-        for c, list_vert in enumerate(self.voronoi.regions[1:]):
-            if len(set(list_vert) & self.id_bad_vertices) > 0:
+        for c in range(self.Nc):
+            region = self.voronoi.point_region[c]
+            list_vert = self.voronoi.regions[region]
+            if -1 in list_vert:
                 self.bnd.add(c)
-            #if -1 in list_vert:
-            #    self.bnd.add(c)
-            #else:
-            #    for id_vert in list_vert:
-            #        pos_vert = self.voronoi.vertices[id_vert]
-            #        if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
-            #            self.bnd.add(c)
-            #            break
-
-
-
-    #def identify_bnd_cells(self):
-    #    self.id_bad_vertices = set()
-    #    for c in range(self.Nc):
-    #        region = self.voronoi.point_region[c]
-    #        #Check if one vertex of the voronoi cell is outside the cube
-    #        for id_vert in self.voronoi.regions[region]:
-    #            pos_vert = self.voronoi.vertices[id_vert]
-    #            if pos_vert[0] < 0 or pos_vert[0] > 1 or pos_vert[1] < 0 or pos_vert[1] > 1:
-    #                self.bnd.add(c)
-    #                self.id_bad_vertices.add(id_vert)
 
     def plot_graph(self):
         nx.draw(self.graph, with_labels=True)
@@ -77,114 +50,7 @@ class GranularMaterial:
 
     def plot_voronoi(self):
         voronoi_plot_2d(self.voronoi)
-        plt.show()
-
-    def compute_missing_vertices(self):
-        for c1 in self.bnd:
-            #Contains at least one vertex in the domain
-            list_vert_cell = self.voronoi.regions[c1+1]
-            list_good_vert_cell = set(list_vert_cell) - self.id_bad_vertices
-            assert len(list_good_vert_cell) > 0
-            #print(c1,list_good_vert)
-            for c2 in self.graph.neighbors(c1):
-                id_ridge = self.graph[c1][c2]['id_ridge']
-                list_vert_edge = self.voronoi.ridge_vertices[id_ridge]
-                intersection = set(list_vert_edge) & list_good_vert_cell
-                if len(intersection) == 2: #All good
-                    pass
-                elif len(intersection) == 1: #Recompute the bad one
-                    (id_bad_vert,) = set(list_vert_edge) - intersection
-                    (id_good_vert,) = intersection
-                    pos_good_vert = self.voronoi.vertices[id_good_vert]
-                    normal = self.graph[c1][c2]['normal']
-                    pos_new_vert = compute_intersection(pos_good_vert, normal)
-                    #Plot
-                    voronoi_plot_2d(self.voronoi)
-                    plt.plot(pos_good_vert[0], pos_good_vert[1], 'bo')
-                    plt.plot(pos_new_vert[0], pos_new_vert[1], 'rx')
-                    plt.xlim(-2,3)
-                    plt.ylim(-2,3)
-                    plt.show()
-                    #if id_bad_vert != -1:
-                    #    pos_old_vert = self.voronoi.vertices[id_bad_vert]
-                    #    print(pos_old_vert,pos_new_vert)
-                    #else:
-                    #    print(pos_new_vert)
-                    
-            #        print(intersection)
-                #Check each point to see if in the domain or not
-                #for vert in list_vert:
-                #    if vert == -1:
-                #        
-                #
-                ##Check if one point is infinite
-                #if -1 in list_vert:
-                #    vert = set(list_vert) - {-1}
-                #    pos_vert = self.voronoi.vertices[list(vert)[0]]
-                #    #print(pos_vert)
-                #    if pos_vert[0] > 0 and pos_vert[0] < 1 and pos_vert[1] > 0 and pos_vert[1] < 1:
-                #        self.graph[c1][c2]['vertices'] = pos_vert #Adding the vertex not at infinity to the edge
-                #    else:
-                #        #Compute two vertices
-                #        #They have to be aligned with the boundary?
-                #        pass
-                    
-                
-                
-    #            print(self.voronoi.ridge_vertices[id_ridge])
-    #        vertices_for_cell = []
-    #        list_vert = list(set(self.voronoi.regions[c]) - {-1})
-    #        for id_vert in list_vert:
-    #            pos_vert = self.voronoi.vertices[id_vert]
-    #            if pos_vert[0] > 0 and pos_vert[0] < 1 and pos_vert[1] > 0 and pos_vert[1] < 1:
-    #                vertices_for_cell.append(pos_vert)
-    #                
-    #        #What to do now?
-    #        #We have the vertices that work. We need the other ones
-    #        print(vertices_for_cell)
-    #        
-    #            
-    #        #elif id_edge in self.id_bad_edges:
-    #        #    list_vert = self.voronoi.ridge_vertices[id_edge]
-    #        #    #print(list_vert)
-    #        #    pb_vert = set(list_vert) & self.id_bad_vertices
-    #        #    #for vert in pb_vert:
-    #        #        #Recompute the new vertex as an intersection
-    #        #    #print(self.voronoi.vertices[list(pb_vert)])
-
-    #not correct after this
-        
-    
-
-    def identify_bad_edges(self):
-        self.id_bad_edges = set()
-        for id_edge in range(len(self.voronoi.ridge_points)):
-            list_vert = self.voronoi.ridge_vertices[id_edge]
-            if len(list_vert) == 1:
-                self.id_bad_edges.add(id_edge)
-            elif len(set(list_vert) & self.id_bad_vertices) > 0:
-                self.id_bad_edges.add(id_edge)
-
-    def compute_vertices(self):
-        for id_edge in range(len(self.voronoi.ridge_points)):
-            if id_edge not in self.id_bad_edges:
-                verts = self.voronoi.ridge_vertices[id_edge]
-                t = self.voronoi.vertices[verts[0]] - self.voronoi.vertices[verts[1]]
-                length = np.linalg.norm(t)
-                assert length < np.inf #Checking no edge has infinite length
-                c1,c2 = self.voronoi.ridge_points[id_edge]
-                self.graph[c1][c2]['length'] = length
-                self.graph[c1][c2]['bary'] = .5 * self.voronoi.vertices[verts].sum(axis=0)
-                
-            elif id_edge in self.id_bad_edges:
-                list_vert = self.voronoi.ridge_vertices[id_edge]
-                #print(list_vert)
-                pb_vert = set(list_vert) & self.id_bad_vertices
-                #for vert in pb_vert:
-                    #Recompute the new vertex as an intersection
-                #print(self.voronoi.vertices[list(pb_vert)])
-        #self.Ne = len(self.graph.edges) #Number of edges
-        
+        plt.show()       
 
     def compute_edge_quantities(self):
         i = 0 #Numbering for minimizing the energy
@@ -216,38 +82,4 @@ class GranularMaterial:
         for c in self.graph.nodes:
             pos_bary += self.voronoi.points[c,:]
         self.pos_bary = pos_bary / self.Nc
-        
-
-
-    def clean_graph(self): #Removes boundary cells that are only connected to boundary cells
-        clean_bnd = self.bnd.copy()
-        for c1 in self.bnd:
-            test = True
-            for c2 in self.graph.neighbors(c1):
-                test = test and self.graph.nodes[c2]['bnd']
-            if test:
-                self.graph.remove_node(c1)
-                clean_bnd.remove(c1)
-        self.bnd = clean_bnd.copy()
-        self.Nc = len(self.graph.nodes) #Number of cells
-        self.Ne = len(self.graph.edges) #Number of edges
-
-def compute_intersection(pt, normal): #Update this
-    #Write quadratic program to have a point on the boundary
-    # Define the coefficients of the objective function
-    P = matrix(np.eye(2), tc='d')
-    q = matrix(-pt, tc='d')
-
-    # Define the coefficients of the inequality constraints
-    G = matrix([[1, 0], [-1.0, 0.], [0, 1], [0,-1]]).T
-    h = matrix([0., 1., 0., 1.])
-
-    # Define the coefficients of the equality constraints
-    A = matrix(normal, tc='d').T
-    b = matrix(np.dot(pt, normal))
-
-    # Solve the quadratic optimization problem
-    solution = solvers.qp(P, q, G, h, A, b)
-    res = np.array(solution['x']).flatten()
     
-    return res
