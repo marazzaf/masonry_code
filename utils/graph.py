@@ -20,7 +20,7 @@ class GranularMaterial:
         self.fill_edges()
         self.identify_bnd_cells()
         self.compute_cell_quantities()
-        #self.compute_edge_quantities()
+        self.compute_edge_quantities()
 
     def fill_cells(self):
         self.graph.add_nodes_from(range(len(self.voronoi.points)))
@@ -56,13 +56,16 @@ class GranularMaterial:
         i = 0 #Numbering for minimizing the energy
         for c1,c2 in self.graph.edges:
             verts = self.voronoi.ridge_vertices[self.graph[c1][c2]['id_ridge']]
-            t = self.voronoi.vertices[verts[0]] - self.voronoi.vertices[verts[1]]
-            length = np.linalg.norm(t)
-            assert length < np.inf #Checking no edge has infinite length
-            self.graph[c1][c2]['length'] = length
-            self.graph[c1][c2]['bary'] = .5 * self.voronoi.vertices[verts].sum(axis=0)
-            self.graph[c1][c2]['tangent'] = t / length
-            self.graph[c1][c2]['normal'] = np.array((-self.graph[c1][c2]['tangent'][1], self.graph[c1][c2]['tangent'][0]))
+            if -1 not in verts:
+                t = self.voronoi.vertices[verts[0]] - self.voronoi.vertices[verts[1]]
+                length = np.linalg.norm(t)
+                assert length < np.inf #Checking no edge has infinite length
+                self.graph[c1][c2]['length'] = length
+                self.graph[c1][c2]['bary'] = .5 * self.voronoi.vertices[verts].sum(axis=0)
+            else: #The force between boundary cells does not matter
+                self.graph[c1][c2]['length'] = 1
+                self.graph[c1][c2]['bary'] = self.voronoi.vertices[verts].sum(axis=0)
+                
             self.graph[c1][c2]['id_edge'] = i
             i += 1
 
@@ -74,8 +77,6 @@ class GranularMaterial:
                 verts = self.voronoi.ridge_vertices[self.graph[c1][c2]['id_ridge']]
                 area += .5 * np.absolute(np.cross(self.voronoi.vertices[verts[0]] - self.voronoi.vertices[verts[1]], self.voronoi.vertices[verts[0]] - self.voronoi.points[c1]))
             self.graph.nodes[c1]['area'] = area
-
-    
 
     def bary_domain(self):
         pos_bary = np.zeros(self.d)
