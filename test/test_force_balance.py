@@ -13,20 +13,15 @@ s = 1
 
 #Space parameters
 d = 2 #Space dimension
-N = 503 #20
+N = 502 #20
 
 #Getting the points
 L = 1 #N // 100
 pts = np.random.uniform(size=d*N) * L
 points = pts.reshape((N,d))
 
-##Test
-#aux = np.linspace(0, 1, N, endpoint=True)
-#from itertools import product
-#points = list(product(aux, aux))
-
 #Creating the GranularMaterial
-GM = GranularMaterial(points, d, s, L)
+GM = GranularMaterial(points, d)
 
 #GM.plot_graph()
 #GM.plot_voronoi()
@@ -53,11 +48,21 @@ eps = np.finfo(float).eps
 #Checking that force balance is true on each cell
 G = GM.graph
 total_force = np.zeros(d)
-for c1 in G.nodes:
+#Checking first on boundary cells
+for c1 in GM.bnd:
+    id_cell = G.nodes[c1]['id_cell']
+    force_cell = force_bnd[:,id_cell] #Adding boundary force to the balance
+    for c2 in G.neighbors(c1): 
+        id_edge = G[c1][c2]['id_edge']
+        normal = G[c1][c2]['normal']
+        sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
+        sign /= abs(sign)
+        force_cell += sign * f[id_edge]
+    total_force += force_cell 
+#Checking inner cells
+inner = set(range(GM.Nc)) - GM.bnd
+for c1 in inner:
     force_cell = np.zeros(d)
-    if G.nodes[c1]['bnd']: #bnd particle
-        id_cell = G.nodes[c1]['id_cell']
-        force_cell += force_bnd[:,id_cell] #Adding boundary force to the balance
     for c2 in G.neighbors(c1): 
         id_edge = G[c1][c2]['id_edge']
         normal = G[c1][c2]['normal']
