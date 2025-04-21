@@ -12,7 +12,7 @@ s = 1
 
 #Getting the points
 d = 2 #Space dimension
-N = 20 #20
+N = 4000 #20
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
 
