@@ -6,14 +6,14 @@ from energy import *
 
 #Fixing seed
 #np.random.seed(seed=136985)
-np.random.seed(seed=1568798) #Pb between 502 and 503
+np.random.seed(seed=1568798)
 
 #Material parameter for friction
 s = 1
 
 #Space parameters
 d = 2 #Space dimension
-N = 503 #20
+N = 5 #20
 
 #Getting the points
 L = 1 #N // 100
@@ -24,7 +24,7 @@ points = pts.reshape((N,d))
 GM = GranularMaterial(points, d)
 
 #GM.plot_graph()
-#GM.plot_voronoi()
+GM.plot_voronoi()
 #sys.exit()
 
 #Creating a force on the boundary cells
@@ -113,4 +113,4 @@ for c1 in inner:
     #except AssertionError:
     #print(np.linalg.norm(force_cell))
     print(force_cell)
-    sys.exit()
+    #sys.exit()
