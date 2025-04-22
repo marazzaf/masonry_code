@@ -6,14 +6,14 @@ from energy import *
 
 #Fixing seed
 #np.random.seed(seed=136985)
-#np.random.seed(seed=1568798) #Pb between 502 and 503
+np.random.seed(seed=1568798) #Pb between 502 and 503
 
 #Material parameter for friction
 s = 1
 
 #Space parameters
 d = 2 #Space dimension
-N = 502 #20
+N = 503 #20
 
 #Getting the points
 L = 1 #N // 100
@@ -45,9 +45,41 @@ f = E.solve(d, GM.Ne)
 #Tolerance for force-balance
 eps = np.finfo(float).eps
 
+##Checking global force balance
+#G = GM.graph
+#total_force = np.zeros(d)
+##Checking first on boundary cells
+#for c1 in GM.bnd:
+#    id_cell = G.nodes[c1]['id_cell']
+#    force_cell = force_bnd[:,id_cell] #Adding boundary force to the balance
+#    for c2 in G.neighbors(c1): 
+#        id_edge = G[c1][c2]['id_edge']
+#        normal = G[c1][c2]['normal']
+#        sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
+#        sign /= abs(sign)
+#        force_cell += sign * f[id_edge]
+#    total_force += force_cell 
+##Checking inner cells
+#inner = set(range(GM.Nc)) - GM.bnd
+#for c1 in inner:
+#    force_cell = np.zeros(d)
+#    for c2 in G.neighbors(c1): 
+#        id_edge = G[c1][c2]['id_edge']
+#        normal = G[c1][c2]['normal']
+#        sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
+#        sign /= abs(sign)
+#        force_cell += sign * f[id_edge]
+#    total_force += force_cell 
+#    #print(G.nodes[c1]['bnd'])
+#    #print(tot)
+#
+#try:
+#    assert np.linalg.norm(total_force - total_ext_force) < eps
+#except AssertionError:
+#    print(np.linalg.norm(total_force - total_ext_force))
+
 #Checking that force balance is true on each cell
 G = GM.graph
-total_force = np.zeros(d)
 #Checking first on boundary cells
 for c1 in GM.bnd:
     id_cell = G.nodes[c1]['id_cell']
@@ -58,7 +90,13 @@ for c1 in GM.bnd:
         sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
         sign /= abs(sign)
         force_cell += sign * f[id_edge]
-    total_force += force_cell 
+#        print(sign,f[id_edge])
+    #try:
+    #    assert np.linalg.norm(force_cell) < eps
+    #except AssertionError:
+    #    print('bnd')
+    print(np.linalg.norm(force_cell))
+        
 #Checking inner cells
 inner = set(range(GM.Nc)) - GM.bnd
 for c1 in inner:
@@ -69,11 +107,10 @@ for c1 in inner:
         sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
         sign /= abs(sign)
         force_cell += sign * f[id_edge]
-    total_force += force_cell 
-    #print(G.nodes[c1]['bnd'])
-    #print(tot)
-
-try:
-    assert np.linalg.norm(total_force - total_ext_force) < eps
-except AssertionError:
-    print(np.linalg.norm(total_force - total_ext_force))
+        print(sign,f[id_edge])
+    #try:
+    #    assert np.linalg.norm(force_cell) < eps
+    #except AssertionError:
+    #print(np.linalg.norm(force_cell))
+    print(force_cell)
+    sys.exit()
