@@ -11,6 +11,27 @@ class Energy:
     
 
     def energy(self, d, Ne):
+        s = GM.s_T #Tresca friction parameter
+        #Storing tangents to each egde
+        t = np.zeros((GM.Ne, GM.d))
+        for c1,c2 in G.edges:
+            id_edge = G[c1][c2]['id_edge']
+            t[id_edge,:] = G[c1][c2]['tangent']
+
+        #Write the energy for Tresca friction law
+        #Update the following
+        x = np.concatenate((x, t.flatten(), -t.flatten()))
+        J = np.concatenate((J, J, J))
+        I = np.concatenate((I, I+GM.Ne, I+2*GM.Ne))
+        self.G = spmatrix(x, I, J) #left-hand side
+        #h = np.concatenate((h, s*np.ones(GM.Ne), s*np.ones(GM.Ne))) #rhs
+        edge_matrix = np.zeros(GM.Ne)
+        for c1,c2 in G.edges:
+            id_edge = G[c1][c2]['id_edge']
+            edge_matrix[id_edge] = G[c1][c2]['length']
+        h = np.concatenate((h, s*edge_matrix, s*edge_matrix))
+        self.h = matrix(h, tc='d')
+        
         aux = np.zeros(d * Ne)
         return matrix(aux, tc='d')
 
