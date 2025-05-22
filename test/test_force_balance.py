@@ -24,7 +24,7 @@ points = pts.reshape((N,d))
 GM = GranularMaterial(points, d)
 
 #GM.plot_graph()
-GM.plot_voronoi()
+#GM.plot_voronoi()
 #sys.exit()
 
 #Creating a force on the boundary cells
@@ -39,8 +39,20 @@ total_ext_force = force_bnd.sum(axis=1)
 #Assembling the system to minimize the energy
 E = Energy(GM, force_bnd)
 
-#Computing the foces
+#Computing the forces
 f = E.solve(d, GM.Ne)
+
+#Plotting the forces
+import matplotlib.pyplot as plt
+voronoi_plot_2d(GM.voronoi)
+for c1,c2 in GM.graph.edges:
+    id_f = GM.graph[c1][c2]['id_edge']
+    bary = GM.graph[c1][c2]['bary']
+    plt.quiver(bary[0], bary[1], f[id_f][0], f[id_f][1])
+plt.xlim(-2,2)
+plt.ylim(-2,2)
+plt.show()
+#sys.exit()
 
 #Tolerance for force-balance
 eps = np.finfo(float).eps
@@ -80,22 +92,17 @@ eps = np.finfo(float).eps
 
 #Checking that force balance is true on each cell
 G = GM.graph
-#Checking first on boundary cells
-for c1 in GM.bnd:
-    id_cell = G.nodes[c1]['id_cell']
-    force_cell = force_bnd[:,id_cell] #Adding boundary force to the balance
-    for c2 in G.neighbors(c1): 
-        id_edge = G[c1][c2]['id_edge']
-        normal = G[c1][c2]['normal']
-        sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
-        sign /= abs(sign)
-        force_cell += sign * f[id_edge]
-#        print(sign,f[id_edge])
-    #try:
-    #    assert np.linalg.norm(force_cell) < eps
-    #except AssertionError:
-    #    print('bnd')
-    print(np.linalg.norm(force_cell))
+##Checking first on boundary cells
+#for c1 in GM.bnd:
+#    id_cell = G.nodes[c1]['id_cell']
+#    force_cell = force_bnd[:,id_cell] #Adding boundary force to the balance
+#    for c2 in G.neighbors(c1): 
+#        id_edge = G[c1][c2]['id_edge']
+#        normal = G[c1][c2]['normal']
+#        sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
+#        sign /= abs(sign)
+#        force_cell += sign * f[id_edge]
+#    print(np.linalg.norm(force_cell))
         
 #Checking inner cells
 inner = set(range(GM.Nc)) - GM.bnd
