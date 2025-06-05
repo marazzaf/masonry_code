@@ -10,7 +10,7 @@ class Energy:
         self.inequality_constraint(GM)
     
 
-    def energy(self, GM):
+    def energy(self, GM, force_bnd):
         G = GM.graph #Graph of the network
         d = GM.d #dimension
         Nc = GM.Nc #Number of cells
@@ -18,22 +18,18 @@ class Energy:
         c = np.zeros(d*Nc + Ne) #Vector for energy
 
         #Writing the energy for external forces
+        #Update the following!
         #rhs of the equality constraint
-#        self.b = -force_bnd.T.flatten() 
-#        self.b = matrix(self.b, tc='d')
-#
-#        #lhs equality constraint
-#        A = np.zeros((GM.d*GM.Ne,GM.d*len(GM.bnd)))
-#        for c1 in GM.bnd:
-#            id_cell = G.nodes[c1]['id_cell']
-#            for c2 in G.neighbors(c1):
-#                id_edge = G[c1][c2]['id_edge']
-#                normal = G[c1][c2]['normal']
-#                sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
-#                sign /= abs(sign)
-#                A[2*id_edge,2*id_cell] = sign #x component
-#                A[2*id_edge+1,2*id_cell+1] = sign #y component
-#        self.A = matrix(A.T, tc='d')
+        self.b = force_bnd.T.flatten() 
+        self.b = matrix(self.b, tc='d')
+
+        #lhs equality constraint
+        A = np.zeros((GM.d*GM.Ne,GM.d*len(GM.bnd)))
+        for c1 in GM.bnd:
+            id_cell = G.nodes[c1]['id_cell']
+            A[2*id_edge,2*id_cell] = sign #x component
+            A[2*id_edge+1,2*id_cell+1] = sign #y component
+        self.A = matrix(A.T, tc='d')
         
         
 
@@ -63,6 +59,7 @@ class Energy:
         aux = np.zeros(d * Ne)
         return matrix(aux, tc='d')
 
+    
     def inequality_constraint(self, GM):
         G = GM.graph #Graph of the network
         #Storing normals and tangents to each egde
@@ -100,7 +97,7 @@ class Energy:
 #        self.A = matrix(A.T, tc='d')
 
     def solve(self, d, Ne):
-        sol = solvers.lp(self.E, self.G, self.h, self.A, self.b) #, solver='glpk') #Remove the equality constraint
+        sol = solvers.lp(self.E, self.G, self.h) #, solver='glpk') #Remove the equality constraint
         try:
             assert sol['status'] == 'optimal'
             vec_sol = sol['x']
