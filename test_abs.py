@@ -1,5 +1,7 @@
 from cvxopt import matrix, solvers
 
+#We want to minimize |x-3|+2|x+1| in x
+
 # Variables: [x, t1, t2]
 # Objective: minimize t1 + 2 * t2
 c = matrix([0.0, 1.0, 2.0])
@@ -19,5 +21,5 @@ h = matrix([3, -3, -1, 1], tc='d')
 sol = solvers.lp(c, G, h)
 
 # Extract solution
-x_opt = sol['x'][0]
+x_opt = sol['x'][0] #Expect -1
 print("Optimal x:", x_opt)
