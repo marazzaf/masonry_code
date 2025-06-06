@@ -5,8 +5,7 @@ import sys
 
 class Energy:
     def __init__(self, GM, force_bnd): #GM is a GranularMaterial
-        self.E = self.energy(GM.d, GM.Ne)
-        self.equality_constraint(GM, force_bnd)
+        self.E = self.energy(GM, force_bnd)
         self.inequality_constraint(GM)
     
 
@@ -18,20 +17,10 @@ class Energy:
         c = np.zeros(d*Nc + Ne) #Vector for energy
 
         #Writing the energy for external forces
-        #Update the following!
-        #rhs of the equality constraint
-        self.b = force_bnd.T.flatten() 
-        self.b = matrix(self.b, tc='d')
-
-        #lhs equality constraint
-        A = np.zeros((GM.d*GM.Ne,GM.d*len(GM.bnd)))
         for c1 in GM.bnd:
             id_cell = G.nodes[c1]['id_cell']
-            A[2*id_edge,2*id_cell] = sign #x component
-            A[2*id_edge+1,2*id_cell+1] = sign #y component
-        self.A = matrix(A.T, tc='d')
-        
-        
+            c[d*c1] = force_bnd[0,id_cell] #x component
+            c[d*c1+1] = force_bnd[1,id_cell] #y component      
 
         #Write the energy for Tresca friction law
         s = GM.s_T #Tresca friction parameter
@@ -43,21 +32,19 @@ class Energy:
             t[id_edge,:] = G[c1][c2]['tangent']
 
         #We put all the x as variables, then the t1 and then the t2?
-        #Update the following
-        x = np.concatenate((x, t.flatten(), -t.flatten()))
-        J = np.concatenate((J, J, J))
-        I = np.concatenate((I, I+GM.Ne, I+2*GM.Ne))
-        self.G = spmatrix(x, I, J) #left-hand side
-        #h = np.concatenate((h, s*np.ones(GM.Ne), s*np.ones(GM.Ne))) #rhs
-        edge_matrix = np.zeros(GM.Ne)
-        for c1,c2 in G.edges:
-            id_edge = G[c1][c2]['id_edge']
-            edge_matrix[id_edge] = G[c1][c2]['length']
-        h = np.concatenate((h, s*edge_matrix, s*edge_matrix))
-        self.h = matrix(h, tc='d')
-        
-        aux = np.zeros(d * Ne)
-        return matrix(aux, tc='d')
+        ##Update the following
+        #x = np.concatenate((x, t.flatten(), -t.flatten()))
+        #J = np.concatenate((J, J, J))
+        #I = np.concatenate((I, I+GM.Ne, I+2*GM.Ne))
+        #self.G = spmatrix(x, I, J) #left-hand side
+        ##h = np.concatenate((h, s*np.ones(GM.Ne), s*np.ones(GM.Ne))) #rhs
+        #edge_matrix = np.zeros(GM.Ne)
+        #for c1,c2 in G.edges:
+        #    id_edge = G[c1][c2]['id_edge']
+        #    edge_matrix[id_edge] = G[c1][c2]['length']
+        #h = np.concatenate((h, s*edge_matrix, s*edge_matrix))
+
+        return matrix(c, tc='d')
 
     
     def inequality_constraint(self, GM):
