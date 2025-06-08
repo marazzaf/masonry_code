@@ -17,33 +17,19 @@ class Energy:
         c = np.zeros(d*Nc + Ne) #Vector for energy
         print(c.shape)
 
-        #Writing the energy for external forces
+        #Energy for external forces
         for c1 in GM.bnd:
             id_cell = G.nodes[c1]['id_cell']
             c[d*c1] = force_bnd[0,id_cell] #x component
             c[d*c1+1] = force_bnd[1,id_cell] #y component      
 
-        #Write the energy for Tresca friction law
+        #Energy for Tresca friction law
         s = GM.s_T #Tresca friction parameter
-
-        #Storing tangents to each egde
-        t = np.zeros((GM.Ne, GM.d))
+        edge_matrix = np.zeros(GM.Ne)
         for c1,c2 in G.edges:
             id_edge = G[c1][c2]['id_edge']
-            t[id_edge,:] = G[c1][c2]['tangent']
-
-        #We put all the x as variables, then the t1 and then the t2?
-        ##Update the following
-        #x = np.concatenate((x, t.flatten(), -t.flatten()))
-        #J = np.concatenate((J, J, J))
-        #I = np.concatenate((I, I+GM.Ne, I+2*GM.Ne))
-        #self.G = spmatrix(x, I, J) #left-hand side
-        ##h = np.concatenate((h, s*np.ones(GM.Ne), s*np.ones(GM.Ne))) #rhs
-        #edge_matrix = np.zeros(GM.Ne)
-        #for c1,c2 in G.edges:
-        #    id_edge = G[c1][c2]['id_edge']
-        #    edge_matrix[id_edge] = G[c1][c2]['length']
-        #h = np.concatenate((h, s*edge_matrix, s*edge_matrix))
+            edge_matrix[id_edge] = G[c1][c2]['length']
+        c[d*Nc:] = s * edge_matrix
 
         return matrix(c, tc='d')
 
@@ -59,27 +45,27 @@ class Energy:
         GG1 = np.zeros((Ne, d*Nc+Ne))
         for c1,c2 in G.edges:
             id_edge = G[c1][c2]['id_edge']
-            normal = G[c1][c2]['normal']
+            n = G[c1][c2]['normal']
             #sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
             #sign /= abs(sign)
-            GG1[id_edge,2*c1] = -normal[0] #x component
-            GG1[id_edge,2*c1+1] = -normal[1] #y component
-            GG1[id_edge,2*c2] = normal[0] #x component
-            GG1[id_edge,2*c2+1] = normal[1] #y component
+            GG1[id_edge,2*c1] = -n[0] #x component
+            GG1[id_edge,2*c1+1] = -n[1] #y component
+            GG1[id_edge,2*c2] = n[0] #x component
+            GG1[id_edge,2*c2+1] = n[1] #y component
             #Check signs above
 
         #Now writing the constraints for the absolute values
         GG2 = np.zeros((2*Ne, d*Nc+Ne))
         for c1,c2 in G.edges:
             id_edge = G[c1][c2]['id_edge']
-            tangent = G[c1][c2]['tangent']
+            t = G[c1][c2]['tangent']
             #First inequality
-            GG2[2*id_edge,2*c1] = -tangent[0] #x component
-            GG2[2*id_edge,2*c1+1] = -tangent[1] #y component
+            GG2[2*id_edge,2*c1] = -t[0] #x component
+            GG2[2*id_edge,2*c1+1] = -t[1] #y component
             GG2[2*id_edge, d*Nc+id_edge] = -1 #for abs
             #Second inequality
-            GG2[2*id_edge+1,2*c2] = tangent[0] #x component
-            GG2[2*id_edge+1,2*c2+1] = tangent[1] #y component
+            GG2[2*id_edge+1,2*c2] = t[0] #x component
+            GG2[2*id_edge+1,2*c2+1] = t[1] #y component
             GG2[2*id_edge+1, d*Nc+id_edge] = -1 #for abs
 
         GG = np.concatenate((GG1, GG2))
