@@ -43,4 +43,4 @@ for c in GM.bnd:
 E = Energy(GM, force_bnd)
 
 #Computing the forces
-f = E.solve(d, GM.Ne)
+f = E.solve(d, GM.Nc)
