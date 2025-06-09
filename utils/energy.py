@@ -48,10 +48,10 @@ class Energy:
             n = G[c1][c2]['normal']
             #sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
             #sign /= abs(sign)
-            GG1[id_edge,2*c1] = -n[0] #x component
-            GG1[id_edge,2*c1+1] = -n[1] #y component
-            GG1[id_edge,2*c2] = n[0] #x component
-            GG1[id_edge,2*c2+1] = n[1] #y component
+            GG1[id_edge,2*c1] = n[0] #x component
+            GG1[id_edge,2*c1+1] = n[1] #y component
+            GG1[id_edge,2*c2] = -n[0] #x component
+            GG1[id_edge,2*c2+1] = -n[1] #y component
             #Check signs above
 
         #Problems in the following.
@@ -115,5 +115,7 @@ class Energy:
 
         #Returning forces in each cell
         vec_forces = sol['z']
+        print(vec_forces)
+        sys.exit()
         return np.array(vec_forces)[:d*Nc].reshape((Nc, d))
         

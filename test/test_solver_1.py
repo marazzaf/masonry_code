@@ -32,7 +32,7 @@ for c in GM.bnd:
 #plt.show()
 
 #Assembling the system to minimize the energy
-E = Energy(GM, -force_bnd)
+E = Energy(GM, force_bnd)
 #print(E.E)
 
 #Computing the forces
