@@ -7,6 +7,7 @@ class Energy:
     def __init__(self, GM, force_bnd): #GM is a GranularMaterial
         self.E = self.energy(GM, force_bnd)
         self.inequality_constraint(GM)
+        self.equality_constraint(GM)
     
 
     def energy(self, GM, force_bnd):
@@ -53,8 +54,6 @@ class Energy:
             GG1[id_edge,2*c2+1] = n[1] #y component
             #Check signs above
 
-        #print(GG1)
-
         #Problems in the following.
         #Now writing the constraints for the absolute values
         GG2 = np.zeros((2*Ne, d*Nc+Ne))
@@ -75,8 +74,6 @@ class Energy:
             GG2[2*id_edge+1,2*c2+1] = -t[1] #y component
             GG2[2*id_edge+1, d*Nc+id_edge] = -1 #for abs
 
-        #print(GG2)
-
         #Assembling constraints
         GG = np.concatenate((GG1, GG2))
         self.G = matrix(GG, tc='d')
@@ -86,35 +83,37 @@ class Energy:
         self.h = matrix(h, tc='d')
         
 
-#    def equality_constraint(self, GM, force_bnd):
-#        G = GM.graph
-#        #rhs of the equality constraint
-#        self.b = -force_bnd.T.flatten() 
-#        self.b = matrix(self.b, tc='d')
-#
-#        #lhs equality constraint
-#        A = np.zeros((GM.d*GM.Ne,GM.d*len(GM.bnd)))
-#        for c1 in GM.bnd:
-#            id_cell = G.nodes[c1]['id_cell']
-#            for c2 in G.neighbors(c1):
-#                id_edge = G[c1][c2]['id_edge']
-#                normal = G[c1][c2]['normal']
-#                sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
-#                sign /= abs(sign)
-#                A[2*id_edge,2*id_cell] = sign #x component
-#                A[2*id_edge+1,2*id_cell+1] = sign #y component
-#        self.A = matrix(A.T, tc='d')
+    def equality_constraint(self, GM): #Zero-average displacement
+        G = GM.graph
+        d = GM.d #dimension
+        Nc = GM.Nc #Number of cells
+        Ne = GM.Ne #Number of internal edges
+        
+        #rhs of the equality constraint
+        b = np.zeros(d)
+        self.b = matrix(b, tc='d')
+
+        #lhs equality constraint
+        A = np.arange(1, d*Nc+1)
+        A %= 2
+        B = (A + 1) % 2
+        A = np.array((A, B))
+        B = np.zeros((d,Ne))
+        A = np.concatenate((A, B), axis=1)
+        self.A = matrix(A, tc='d')
 
     def solve(self, d, Nc):
-        sol = solvers.lp(self.E, self.G, self.h) #, solver='glpk')
+        sol = solvers.lp(self.E, self.G, self.h, self.A, self.b) #, solver='glpk')
         vec_sol = sol['x'] #Should always be zero!
         vec_sol = sol['z'] #Gives the forces!
-        #try:
-        #    assert sol['status'] == 'optimal'
-        #    vec_sol = sol['x']
-        #    return np.array(vec_sol).reshape((Nc, d))
-        #except AssertionError:
-        #    print('No optimal result')
-        #    print(sol['primal infeasibility'])
-        #    sys.exit()
+
+        #Checking we find no displacement
+        assert sol['status'] == 'optimal'
+        vec_sol = sol['x'] #result should be zero
+        disp = np.array(vec_sol)[:d*Nc].reshape((Nc, d))
+        assert np.linalg.norm(disp) < 1e-10
+
+        #Returning forces in each cell
+        vec_forces = sol['z']
+        return np.array(vec_forces)[:d*Nc].reshape((Nc, d))
         

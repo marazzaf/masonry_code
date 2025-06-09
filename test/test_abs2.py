@@ -1,6 +1,6 @@
 from cvxopt import matrix, solvers
 
-# Variables: [u_1, u_2, t]
+# Variables: [u_x, u_y, v_x, v_y, t]
 # Objective: minimize t - external forces
 c = matrix([1, -1, 1], tc='d')
 

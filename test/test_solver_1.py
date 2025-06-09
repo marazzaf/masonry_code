@@ -33,35 +33,11 @@ for c in GM.bnd:
 
 #Assembling the system to minimize the energy
 E = Energy(GM, -force_bnd)
-en = E.E
-print(en)
-
-#Assembling inequality constraints
-#Left-hand side
-G = np.array([[ 1, -0, -1,  0,  0,  0,  0,  0, -1,  0,  0,  0], #Edge 0
-              [-1,  0,  1, -0,  0,  0,  0,  0, -1,  0,  0,  0],
-              [ 0, -1,  0,  0, -0,  1,  0,  0,  0, -1,  0,  0], #Edge 1
-              [-0,  1,  0,  0,  0, -1,  0,  0,  0, -1,  0,  0],
-              [ 0,  0,  0, -1,  0,  0, -0,  1,  0,  0, -1,  0], #Edge 2
-              [ 0,  0, -0,  1,  0,  0,  0, -1,  0,  0, -1,  0],
-              [ 0,  0,  0,  0,  1, -0, -1,  0,  0,  0,  0, -1], #Edge 3
-              [ 0,  0,  0,  0, -1,  0,  1, -0,  0,  0,  0, -1]])
-#print(np.linalg.matrix_rank(G))
-#sys.exit()
-G = matrix(G, tc='d')
-
-#Rght-hand side
-h = np.zeros(8)
-h = matrix(h, tc='d')
-
-#Manual computation
-sol = solvers.lp(en, G, h) #, solver='glpk')
-vec_sol = sol['x'] #Should always be zero!
-vec_sol = sol['z'] #Gives the forces!
-sys.exit()
+#print(E.E)
 
 #Computing the forces
 f = E.solve(d, GM.Nc)
+print(f)
 sys.exit()
 
 #Plotting the forces
