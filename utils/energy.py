@@ -15,17 +15,16 @@ class Energy:
         Nc = GM.Nc #Number of cells
         Ne = GM.Ne #Number of internal edges
         c = np.zeros(d*Nc + Ne) #Vector for energy
-        print(c.shape)
 
         #Energy for external forces
         for c1 in GM.bnd:
             id_cell = G.nodes[c1]['id_cell']
-            c[d*c1] = force_bnd[0,id_cell] #x component
-            c[d*c1+1] = force_bnd[1,id_cell] #y component      
+            c[d*c1] = -force_bnd[0,id_cell] #x component
+            c[d*c1+1] = -force_bnd[1,id_cell] #y component      
 
         #Energy for Tresca friction law
         s = GM.s_T #Tresca friction parameter
-        edge_matrix = np.zeros(GM.Ne)
+        edge_matrix = np.zeros(Ne)
         for c1,c2 in G.edges:
             id_edge = G[c1][c2]['id_edge']
             edge_matrix[id_edge] = G[c1][c2]['length']
@@ -54,6 +53,9 @@ class Energy:
             GG1[id_edge,2*c2+1] = n[1] #y component
             #Check signs above
 
+        print(GG1)
+
+        #Problems in the following.
         #Now writing the constraints for the absolute values
         GG2 = np.zeros((2*Ne, d*Nc+Ne))
         for c1,c2 in G.edges:
@@ -62,15 +64,23 @@ class Energy:
             #First inequality
             GG2[2*id_edge,2*c1] = -t[0] #x component
             GG2[2*id_edge,2*c1+1] = -t[1] #y component
+            GG2[2*id_edge,2*c2] = t[0] #x component
+            GG2[2*id_edge,2*c2+1] = t[1] #y component
             GG2[2*id_edge, d*Nc+id_edge] = -1 #for abs
             #Second inequality
-            GG2[2*id_edge+1,2*c2] = t[0] #x component
-            GG2[2*id_edge+1,2*c2+1] = t[1] #y component
+            GG2[2*id_edge+1,2*c1] = t[0] #x component
+            GG2[2*id_edge+1,2*c1+1] = t[1] #y component
+            GG2[2*id_edge+1,2*c2] = -t[0] #x component
+            GG2[2*id_edge+1,2*c2+1] = -t[1] #y component
             GG2[2*id_edge+1, d*Nc+id_edge] = -1 #for abs
 
-        GG = np.concatenate((GG1, GG2))
-        self.G = matrix(GG, tc='d')
+        print(GG2)
 
+        #Assembling constraints
+        GG = np.concatenate((GG1, GG2))
+        print(GG.shape)
+        self.G = matrix(GG, tc='d')
+        
         #Right-hand side
         h = np.zeros(3*Ne)
         self.h = matrix(h, tc='d')
@@ -97,12 +107,14 @@ class Energy:
 
     def solve(self, d, Nc):
         sol = solvers.lp(self.E, self.G, self.h) #, solver='glpk')
-        try:
-            assert sol['status'] == 'optimal'
-            vec_sol = sol['x']
-            return np.array(vec_sol).reshape((Nc, d))
-        except AssertionError:
-            print('No optimal result')
-            print(sol['primal infeasibility'])
-            sys.exit()
+        vec_sol = sol['x'] #Should always be zero!
+        vec_sol = sol['z'] #Gives the forces!
+        #try:
+        #    assert sol['status'] == 'optimal'
+        #    vec_sol = sol['x']
+        #    return np.array(vec_sol).reshape((Nc, d))
+        #except AssertionError:
+        #    print('No optimal result')
+        #    print(sol['primal infeasibility'])
+        #    sys.exit()
         
