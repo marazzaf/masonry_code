@@ -24,7 +24,9 @@ class GranularMaterial:
 
     def fill_cells(self):
         self.graph.add_nodes_from(range(len(self.voronoi.points)))
-        self.Nc = len(self.graph.nodes) #Number of cells           
+        self.Nc = len(self.graph.nodes) #Number of cells
+        for c in range(len(self.voronoi.points)):
+            self.graph.nodes[c]['bary'] = self.voronoi.points[c]
 
     def fill_edges(self):
         for id_ridge in range(len(self.voronoi.ridge_points)):

@@ -38,12 +38,10 @@ E = Energy(GM, -force_bnd)
 #Computing the forces
 f = E.solve(d, GM.Nc)
 print(f)
-sys.exit()
 
 #Plotting the forces
 voronoi_plot_2d(GM.voronoi)
-for c1,c2 in GM.graph.edges:
-    id_f = GM.graph[c1][c2]['id_edge']
-    bary = GM.graph[c1][c2]['bary']
-    plt.quiver(bary[0], bary[1], f[id_f][0], f[id_f][1])
+for c in GM.graph.nodes:
+    bary = GM.graph.nodes[c]['bary']
+    plt.quiver(bary[0], bary[1], f[c,0], f[c,1])
 plt.show()
