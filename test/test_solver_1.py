@@ -18,10 +18,10 @@ GM = GranularMaterial(points, d, s)
 
 ##Plotting points
 #GM.plot_graph()
-GM.plot_voronoi()
+#GM.plot_voronoi()
 
 #Creating a force on the boundary cells
-compression = 1e1 #compressive force
+compression = 1e2 #compressive force
 force_bnd = np.zeros((d,len(GM.bnd)))
 i = 0
 for c in GM.bnd:
@@ -32,8 +32,32 @@ for c in GM.bnd:
 #plt.show()
 
 #Assembling the system to minimize the energy
-E = Energy(GM, force_bnd)
-print(E.E)
+E = Energy(GM, -force_bnd)
+en = E.E
+print(en)
+
+#Assembling inequality constraints
+#Left-hand side
+G = np.array([[ 1, -0, -1,  0,  0,  0,  0,  0, -1,  0,  0,  0], #Edge 0
+              [-1,  0,  1, -0,  0,  0,  0,  0, -1,  0,  0,  0],
+              [ 0, -1,  0,  0, -0,  1,  0,  0,  0, -1,  0,  0], #Edge 1
+              [-0,  1,  0,  0,  0, -1,  0,  0,  0, -1,  0,  0],
+              [ 0,  0,  0, -1,  0,  0, -0,  1,  0,  0, -1,  0], #Edge 2
+              [ 0,  0, -0,  1,  0,  0,  0, -1,  0,  0, -1,  0],
+              [ 0,  0,  0,  0,  1, -0, -1,  0,  0,  0,  0, -1], #Edge 3
+              [ 0,  0,  0,  0, -1,  0,  1, -0,  0,  0,  0, -1]])
+#print(np.linalg.matrix_rank(G))
+#sys.exit()
+G = matrix(G, tc='d')
+
+#Rght-hand side
+h = np.zeros(8)
+h = matrix(h, tc='d')
+
+#Manual computation
+sol = solvers.lp(en, G, h) #, solver='glpk')
+vec_sol = sol['x'] #Should always be zero!
+vec_sol = sol['z'] #Gives the forces!
 sys.exit()
 
 #Computing the forces

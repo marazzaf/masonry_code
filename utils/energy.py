@@ -53,13 +53,14 @@ class Energy:
             GG1[id_edge,2*c2+1] = n[1] #y component
             #Check signs above
 
-        print(GG1)
+        #print(GG1)
 
         #Problems in the following.
         #Now writing the constraints for the absolute values
         GG2 = np.zeros((2*Ne, d*Nc+Ne))
         for c1,c2 in G.edges:
             id_edge = G[c1][c2]['id_edge']
+            #print(c1,c2,id_edge)
             t = G[c1][c2]['tangent']
             #First inequality
             GG2[2*id_edge,2*c1] = -t[0] #x component
@@ -74,11 +75,10 @@ class Energy:
             GG2[2*id_edge+1,2*c2+1] = -t[1] #y component
             GG2[2*id_edge+1, d*Nc+id_edge] = -1 #for abs
 
-        print(GG2)
+        #print(GG2)
 
         #Assembling constraints
         GG = np.concatenate((GG1, GG2))
-        print(GG.shape)
         self.G = matrix(GG, tc='d')
         
         #Right-hand side
