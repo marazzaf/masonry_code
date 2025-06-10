@@ -115,7 +115,13 @@ class Energy:
         #Check on y? Is it the vector sum of all disp?
         #print(sol['x'])
         #print(sol['y'])
-        print(sol['z'])
+        #print(sol['z'])
+
+        #Test
+        print(self.G.size)
+        print(sol['z'].size)
+        aux = -self.G.T * sol['z'] #THIS IS IT?
+        print(aux[:d*Nc])
 
         #Returning forces in each cell
         vec_forces = sol['z']
