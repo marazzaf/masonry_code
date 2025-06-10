@@ -48,6 +48,7 @@ class Energy:
         for c1,c2 in G.edges:
             id_edge = G[c1][c2]['id_edge']
             n = G[c1][c2]['normal']
+            c1,c2 = sorted((c1,c2)) #c1 < c2
             #Need the normal and the jump to be consistent. They're not now
             GG1[id_edge,2*c1] = n[0] #x component
             GG1[id_edge,2*c1+1] = n[1] #y component

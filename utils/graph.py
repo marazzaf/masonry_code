@@ -34,6 +34,10 @@ class GranularMaterial:
                 cid_j = face["adjacent_cell"]
                 if self.graph.has_edge(cid_i, cid_j):     # skip duplicates
                     continue
+                elif cid_j < 0: #Boundary edge
+                    self.bnd.add(cid_i) #Mark cell as being on the boundary
+                    continue #See how to deal with boundary edges later on
+                cid_i, cid_j = sorted((cid_i, cid_j)) #cid_i < cid_j always
 
                 #Computing barycentre of the edge
                 vidx = face["vertices"]
@@ -43,14 +47,11 @@ class GranularMaterial:
                 length = np.linalg.norm(v1 - v2)
                 #Computing tangent and normal
                 unit_tangent = (v1 - v2) / length
-                unit_normal = np.array((-unit_tangent[1], unit_tangent[0]))
+                normal = self.graph.nodes[cid_j]['pos'] - self.graph.nodes[cid_i]['pos'] #normal from - towards +
+                unit_normal = normal / np.linalg.norm(normal)
 
-                if cid_j < 0: #Boundary edge
-                    self.bnd.add(cid_i) #Store cell as on the boundary
-                    #self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length) #add boundary edge
-                else: #Inner edge
-                    self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i) #add interal edge
-                    i += 1
+                self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i) #add interal edge
+                i += 1
         
         self.Ne = len(self.graph.edges) #Number of edges
 
