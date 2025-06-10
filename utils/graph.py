@@ -5,17 +5,17 @@ import numpy as np
 from cvxopt import solvers,matrix
 
 class GranularMaterial:
-    def __init__(self, points, d, s_T=1., L=1.):
+    def __init__(self, voronoi, d, s_T=1., L=1.):
         self.d = d
         self.s_T = s_T #tresca friction
         self.L = L #Size of square domain
-        self.voronoi = Voronoi(points)
+        self.voronoi = voronoi
         self.graph = nx.Graph()
         self.bnd = set()
         self.fill_graph()
         self.bary_domain()
 
-    def fill_graph(self):
+    def fill_graph(self): #Update here
         self.fill_cells()
         self.fill_edges()
         self.identify_bnd_cells()
