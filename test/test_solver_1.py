@@ -20,15 +20,13 @@ voronoi = pyvoro.compute_2d_voronoi(
     [[0, 1], [0, 1]],                      # bounding box
     0.1                                    # block size ≈ sqrt(cell area)
 )
-for i in voronoi:
-    print(i)
-sys.exit()
 
 #Creating the graph
 GM = GranularMaterial(voronoi, d, s)
 
 ##Plotting points
-#GM.plot_graph()
+GM.plot_graph()
+sys.exit()
 
 #Creating a force on the boundary cells
 compression = 1e2 #compressive force
