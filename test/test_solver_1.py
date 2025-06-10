@@ -28,12 +28,12 @@ GM = GranularMaterial(voronoi, d, s)
 #GM.plot_graph()
 
 #Creating a force on the boundary cells
-compression = 1e2 #compressive force
+compression = 10 #compressive force
 force_bnd = np.zeros((d,len(GM.bnd)))
 i = 0
 for c in GM.bnd:
     GM.graph.nodes[c]['id_cell'] = i
-    force_bnd[:,i] = compression * (GM.pos_bary - GM.voronoi.points[c]) #vector pointing towards the barycenter
+    force_bnd[:,i] = compression * (GM.pos_bary - GM.graph.nodes[c]['pos']) #vector pointing towards the barycenter
     #plt.quiver(GM.voronoi.points[c][0], GM.voronoi.points[c][1], force_bnd[0,i], force_bnd[1,i]) #For plot
     i += 1
 #plt.show()

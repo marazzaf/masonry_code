@@ -31,6 +31,8 @@ class Energy:
             edge_matrix[id_edge] = G[c1][c2]['length']
         c[d*Nc:] = s * edge_matrix
 
+        print(c)
+
         return matrix(c, tc='d')
 
     
@@ -110,7 +112,9 @@ class Energy:
         disp = np.array(vec_sol)[:d*Nc].reshape((Nc, d))
         assert np.linalg.norm(disp) < 1e-10
         #Check on y? Is it the vector sum of all disp?
+        #print(sol['x'])
         #print(sol['y'])
+        print(sol['z'])
 
         #Returning forces in each cell
         vec_forces = sol['z']

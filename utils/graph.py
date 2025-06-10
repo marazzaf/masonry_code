@@ -13,6 +13,7 @@ class GranularMaterial:
         self.graph = nx.Graph()
         self.bnd = set()
         self.fill_graph()
+        self.bary_domain()
 
     def fill_graph(self): #Update here
         self.fill_cells()
@@ -31,23 +32,22 @@ class GranularMaterial:
         for cid_i, cell_i in enumerate(self.voronoi):
             for face in cell_i["faces"]:
                 cid_j = face["adjacent_cell"]
-                if cid_i >= cid_j:     # skip duplicates
+                if self.graph.has_edge(cid_i, cid_j):     # skip duplicates
                     continue
 
-                #Computing edge quantities
-                normal = self.graph.nodes[cid_i]['pos'] - self.graph.nodes[cid_j]['pos']
-                unit_normal = normal / np.linalg.norm(normal)
-                unit_tangent = np.array((-unit_normal[1], unit_normal[0]))
                 #Computing barycentre of the edge
                 vidx = face["vertices"]
                 verts_i = np.asarray(cell_i["vertices"])[vidx]  # shape (2,2)
                 v1, v2 = verts_i 
                 barycentre = .5 * (v1 + v2)
                 length = np.linalg.norm(v1 - v2)
+                #Computing tangent and normal
+                unit_tangent = (v1 - v2) / length
+                unit_normal = np.array((-unit_tangent[1], unit_tangent[0]))
 
                 if cid_j < 0: #Boundary edge
                     self.bnd.add(cid_i) #Store cell as on the boundary
-                    self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length) #add boundary edge
+                    #self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length) #add boundary edge
                 else: #Inner edge
                     self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i) #add interal edge
                     i += 1
@@ -85,9 +85,9 @@ class GranularMaterial:
     #        self.graph[c1][c2]['id_edge'] = i
     #        i += 1
 
-    #def bary_domain(self):
-    #    pos_bary = np.zeros(self.d)
-    #    for c in self.graph.nodes:
-    #        pos_bary += self.voronoi.points[c,:]
-    #    self.pos_bary = pos_bary / self.Nc
+    def bary_domain(self):
+        pos_bary = np.zeros(self.d)
+        for c in self.graph.nodes:
+            pos_bary += self.graph.nodes[c]['pos']
+        self.pos_bary = pos_bary / self.Nc
     
