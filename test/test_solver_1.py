@@ -25,8 +25,7 @@ voronoi = pyvoro.compute_2d_voronoi(
 GM = GranularMaterial(voronoi, d, s)
 
 ##Plotting points
-GM.plot_graph()
-sys.exit()
+#GM.plot_graph()
 
 #Creating a force on the boundary cells
 compression = 1e2 #compressive force

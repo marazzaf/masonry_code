@@ -43,12 +43,13 @@ class GranularMaterial:
                 verts_i = np.asarray(cell_i["vertices"])[vidx]  # shape (2,2)
                 v1, v2 = verts_i 
                 barycentre = .5 * (v1 + v2)
+                length = np.linalg.norm(v1 - v2)
 
                 if cid_j < 0: #Boundary edge
                     self.bnd.add(cid_i) #Store cell as on the boundary
-                    self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre) #add boundary edge
+                    self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length) #add boundary edge
                 else: #Inner edge
-                    self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, id_edge= i) #add interal edge
+                    self.graph.add_edge(cid_i, cid_j, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i) #add interal edge
                     i += 1
         
         self.Ne = len(self.graph.edges) #Number of edges
