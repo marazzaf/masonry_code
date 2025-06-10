@@ -21,7 +21,7 @@ class Energy:
         for c1 in GM.bnd:
             id_cell = G.nodes[c1]['id_cell']
             c[d*c1] = -force_bnd[0,id_cell] #x component
-            c[d*c1+1] = -force_bnd[1,id_cell] #y component      
+            c[d*c1+1] = -force_bnd[1,id_cell] #y component
 
         #Energy for Tresca friction law
         s = GM.s_T #Tresca friction parameter
@@ -46,13 +46,10 @@ class Energy:
         for c1,c2 in G.edges:
             id_edge = G[c1][c2]['id_edge']
             n = G[c1][c2]['normal']
-            #sign = np.dot(normal, GM.voronoi.points[c2] - GM.voronoi.points[c1])
-            #sign /= abs(sign)
             GG1[id_edge,2*c1] = n[0] #x component
             GG1[id_edge,2*c1+1] = n[1] #y component
             GG1[id_edge,2*c2] = -n[0] #x component
             GG1[id_edge,2*c2+1] = -n[1] #y component
-            #Check signs above
 
         #Problems in the following.
         #Now writing the constraints for the absolute values
@@ -103,19 +100,17 @@ class Energy:
         self.A = matrix(A, tc='d')
 
     def solve(self, d, Nc):
-        sol = solvers.lp(self.E, self.G, self.h, self.A, self.b) #, solver='glpk')
-        vec_sol = sol['x'] #Should always be zero!
-        vec_sol = sol['z'] #Gives the forces!
+        sol = solvers.lp(self.E, self.G, self.h, self.A, self.b)
 
         #Checking we find no displacement
         assert sol['status'] == 'optimal'
         vec_sol = sol['x'] #result should be zero
         disp = np.array(vec_sol)[:d*Nc].reshape((Nc, d))
         assert np.linalg.norm(disp) < 1e-10
+        #Check on y? Is it the vector sum of all disp?
+        #print(sol['y'])
 
         #Returning forces in each cell
         vec_forces = sol['z']
-        print(vec_forces)
-        sys.exit()
-        return np.array(vec_forces)[:d*Nc].reshape((Nc, d))
+        return np.array(vec_forces)[:d*Nc].reshape((d, Nc)).T
         

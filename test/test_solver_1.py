@@ -26,7 +26,7 @@ force_bnd = np.zeros((d,len(GM.bnd)))
 i = 0
 for c in GM.bnd:
     GM.graph.nodes[c]['id_cell'] = i
-    force_bnd[:,i] = GM.pos_bary - GM.voronoi.points[c] #vector pointing towards the barycenter
+    force_bnd[:,i] = compression * (GM.pos_bary - GM.voronoi.points[c]) #vector pointing towards the barycenter
     #plt.quiver(GM.voronoi.points[c][0], GM.voronoi.points[c][1], force_bnd[0,i], force_bnd[1,i]) #For plot
     i += 1
 #plt.show()
@@ -38,6 +38,7 @@ E = Energy(GM, force_bnd)
 #Computing the forces
 f = E.solve(d, GM.Nc)
 print(f)
+sys.exit()
 
 #Plotting the forces
 voronoi_plot_2d(GM.voronoi)
