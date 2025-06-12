@@ -112,43 +112,35 @@ class Energy:
         #print(A)
         ##self.A = matrix(A, tc='d')
 
-    def solve(self, d, Nc, Ne):
+    def solve(self, GM):
+        #Solving linear problem
         sol = solvers.lp(self.E, self.G, self.h, self.A, self.b)
 
-        #Checking we find no displacement
+        #Checking solution converges
         assert sol['status'] == 'optimal'
-        #vec_sol = sol['x'] #result should be zero
-        #disp = np.array(vec_sol)[:d*Nc].reshape((Nc, d))
-        #assert np.linalg.norm(disp) < 1e-10
-        #Check on y? Is it the vector sum of all disp?
-        #print(sol['x'])
-        #print(sol['y'])
-        #test = self.A * sol['x']
-        #print(test)
-        #print(sol['z'])
 
-        #Test old
-        #print(sol['z'].size)
-        #vec_forces = -self.G.T * sol['z'] #IS THIS IT?
-        #print(aux[:d*Nc])
-
-        #Test
-        aux1 = np.array(sol['z'][:Ne]).reshape(Ne)
-        print(aux1.shape)
-        #print(aux1) #Multiply by each edge normal to have the normal component of the force at each edge
+        #Assembling forces at the internal edges
+        d = GM.d
+        Ne = GM.Ne
+        aux1 = np.array(sol['z'][:Ne]).reshape(Ne) #Multiply by each edge normal to have the normal component of the force at each edge
         aux2 = sol['z'][Ne:]
         aux2 = np.array(aux2).reshape((Ne,d))
-        aux2 = -aux2[:,0] + aux2[:,1]
-        print(aux2.shape)
-        #print(aux2)
-        #How do we get the tangent component of the force at each edge?
-        aux = np.array([aux1, aux2]).T #IS THIS IT? #Force at each edge in (n,t) coordinates?
-        print(aux)
-        sys.exit()
+        aux2 = -aux2[:,0] + aux2[:,1] #Summing the components in each direction along t
+        aux = np.array([aux1, aux2]).T #Force at each edge in (n,t) coordinates
+        
+        #Returning forces in each internal cell
+        vec_forces = aux.copy()
+        G =  GM.graph
+        for c1,c2 in G.edges:
+            id_edge = G[c1][c2]['id_edge']
+            n = G[c1][c2]['normal']
+            t = G[c1][c2]['tangent']
+            vec_forces[id_edge,:] = vec_forces[0] * n + vec_forces[1] * t
+        return vec_forces #Forces in (e_1,e_2) basis
 
-        #Returning forces in each cell
-        vec_forces = sol['z']
-        print(vec_forces)
-        sys.exit()
-        return np.array(vec_forces)[:d*Nc].reshape((Nc, d))
+        ##Returning forces in each cell
+        #vec_forces = sol['z']
+        #print(vec_forces)
+        #sys.exit()
+        #return np.array(vec_forces)[:d*Nc].reshape((Nc, d))
         

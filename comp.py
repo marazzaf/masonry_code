@@ -54,8 +54,12 @@ for c in GM.bnd:
 E = Energy(GM, force_bnd)
 
 #Computing the forces
-f = E.solve(d, GM.Nc, GM.Ne)
+f = E.solve(GM)
 print(f)
+sys.exit()
+
+#Test stress reconstruction
+GM.stress_reconstruction(f)
 
 #Plotting the forces
 for c in GM.graph.nodes:

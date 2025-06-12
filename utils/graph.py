@@ -108,4 +108,12 @@ class GranularMaterial:
         for c in self.graph.nodes:
             pos_bary += self.graph.nodes[c]['pos']
         self.pos_bary = pos_bary / self.Nc
+
+    def stress_reconstruction(self, vec_forces):
+        G =  self.graph
+        for c1 in G.nodes:
+            if c1 in self.bnd: #No reconstruction on boundary cells
+                continue
+            for c2 in G.neighbors(c1):
+                id_edge = G[c1][c2]['id_edge']
     
