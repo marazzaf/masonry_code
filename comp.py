@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 np.random.seed(seed=136985)
 
 #Material parameter for friction
-s = 1
+s = 10
 
 #Getting the points
 d = 2 #Space dimension
