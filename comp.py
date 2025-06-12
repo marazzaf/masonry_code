@@ -13,7 +13,7 @@ s = 10
 
 #Getting the points
 d = 2 #Space dimension
-N = 20 #20
+N = 60 #20
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
 
@@ -54,11 +54,12 @@ for c in GM.bnd:
 E = Energy(GM, force_bnd)
 
 #Computing the forces
-f = E.solve(d, GM.Nc)
+f = E.solve(d, GM.Nc, GM.Ne)
 print(f)
 
 #Plotting the forces
 for c in GM.graph.nodes:
     bary = GM.graph.nodes[c]['pos']
-    plt.quiver(bary[0], bary[1], f[c,0], f[c,1])
+    if np.linalg.norm(f[c,:]) > 1e-5:
+        plt.quiver(bary[0], bary[1], f[c,0], f[c,1])
 plt.show()

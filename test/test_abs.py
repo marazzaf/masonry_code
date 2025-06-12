@@ -21,5 +21,6 @@ h = matrix([3, -3, -1, 1], tc='d')
 sol = solvers.lp(c, G, h)
 
 # Extract solution
-x_opt = sol['x'][0] #Expect -1
-print("Optimal x:", x_opt)
+x_opt = sol['x'] #Expect -1
+print(x_opt)
+print(sol['z'])

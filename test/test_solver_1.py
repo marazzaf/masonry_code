@@ -45,7 +45,7 @@ E = Energy(GM, force_bnd)
 #print(E.E)
 
 #Computing the forces
-f = E.solve(d, GM.Nc)
+f = E.solve(d, GM.Nc, GM.Ne)
 print(f)
 
 #Plotting the forces

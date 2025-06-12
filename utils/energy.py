@@ -47,7 +47,6 @@ class Energy:
             id_edge = G[c1][c2]['id_edge']
             n = G[c1][c2]['normal']
             c1,c2 = sorted((c1,c2)) #c1 < c2
-            #Need the normal and the jump to be consistent. They're not now
             GG1[id_edge,2*c1] = n[0] #x component
             GG1[id_edge,2*c1+1] = n[1] #y component
             GG1[id_edge,2*c2] = -n[0] #x component
@@ -60,13 +59,13 @@ class Energy:
             id_edge = G[c1][c2]['id_edge']
             #print(c1,c2,id_edge)
             t = G[c1][c2]['tangent']
-            #First inequality
+            #First inequality. Direction of -t
             GG2[2*id_edge,2*c1] = -t[0] #x component
             GG2[2*id_edge,2*c1+1] = -t[1] #y component
             GG2[2*id_edge,2*c2] = t[0] #x component
             GG2[2*id_edge,2*c2+1] = t[1] #y component
             GG2[2*id_edge, d*Nc+id_edge] = -1 #for abs
-            #Second inequality
+            #Second inequality. Direction of t
             GG2[2*id_edge+1,2*c1] = t[0] #x component
             GG2[2*id_edge+1,2*c1+1] = t[1] #y component
             GG2[2*id_edge+1,2*c2] = -t[0] #x component
@@ -75,7 +74,7 @@ class Energy:
 
         #Assembling constraints
         GG = np.concatenate((GG1, GG2))
-        #print(GG)
+        print(GG.shape)
         self.G = matrix(GG, tc='d')
         
         #Right-hand side
@@ -113,7 +112,7 @@ class Energy:
         #print(A)
         ##self.A = matrix(A, tc='d')
 
-    def solve(self, d, Nc):
+    def solve(self, d, Nc, Ne):
         sol = solvers.lp(self.E, self.G, self.h, self.A, self.b)
 
         #Checking we find no displacement
@@ -122,19 +121,34 @@ class Energy:
         #disp = np.array(vec_sol)[:d*Nc].reshape((Nc, d))
         #assert np.linalg.norm(disp) < 1e-10
         #Check on y? Is it the vector sum of all disp?
-        print(sol['x'])
+        #print(sol['x'])
         #print(sol['y'])
-        test = self.A * sol['x']
-        print(test)
+        #test = self.A * sol['x']
+        #print(test)
         #print(sol['z'])
 
-        #Test
-        #print(self.G.size)
+        #Test old
         #print(sol['z'].size)
-        vec_forces = -self.G.T * sol['z'] #THIS IS IT?
+        #vec_forces = -self.G.T * sol['z'] #IS THIS IT?
         #print(aux[:d*Nc])
 
+        #Test
+        aux1 = np.array(sol['z'][:Ne]).reshape(Ne)
+        print(aux1.shape)
+        #print(aux1) #Multiply by each edge normal to have the normal component of the force at each edge
+        aux2 = sol['z'][Ne:]
+        aux2 = np.array(aux2).reshape((Ne,d))
+        aux2 = -aux2[:,0] + aux2[:,1]
+        print(aux2.shape)
+        #print(aux2)
+        #How do we get the tangent component of the force at each edge?
+        aux = np.array([aux1, aux2]).T #IS THIS IT? #Force at each edge in (n,t) coordinates?
+        print(aux)
+        sys.exit()
+
         #Returning forces in each cell
-        #vec_forces = sol['z']
+        vec_forces = sol['z']
+        print(vec_forces)
+        sys.exit()
         return np.array(vec_forces)[:d*Nc].reshape((Nc, d))
         
