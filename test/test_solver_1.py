@@ -27,8 +27,7 @@ GM = GranularMaterial(points, d, s)
 
 ##Plotting points
 #GM.plot_graph()
-GM.plot_voronoi()
-sys.exit()
+#GM.plot_voronoi()
 
 #Creating a force on the boundary cells
 compression = 1e2 #compressive force
@@ -37,7 +36,7 @@ i = 0
 for c in GM.bnd:
     GM.graph.nodes[c]['id_cell'] = i
     force_bnd[:,i] = compression * (GM.pos_bary - GM.graph.nodes[c]['pos']) #vector pointing towards the barycenter
-    #plt.quiver(GM.voronoi.points[c][0], GM.voronoi.points[c][1], force_bnd[0,i], force_bnd[1,i]) #For plot
+    plt.quiver(GM.graph.nodes[c]['pos'][0], GM.graph.nodes[c]['pos'][1], force_bnd[0,i], force_bnd[1,i], color='red') #For plot
     i += 1
 #plt.show()
 
@@ -48,11 +47,9 @@ E = Energy(GM, force_bnd)
 #Computing the forces
 f = E.solve(d, GM.Nc)
 print(f)
-sys.exit()
 
 #Plotting the forces
-voronoi_plot_2d(GM.voronoi)
 for c in GM.graph.nodes:
-    bary = GM.graph.nodes[c]['bary']
+    bary = GM.graph.nodes[c]['pos']
     plt.quiver(bary[0], bary[1], f[c,0], f[c,1])
 plt.show()

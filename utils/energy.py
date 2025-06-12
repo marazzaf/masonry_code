@@ -118,12 +118,12 @@ class Energy:
         #print(sol['z'])
 
         #Test
-        print(self.G.size)
-        print(sol['z'].size)
-        aux = -self.G.T * sol['z'] #THIS IS IT?
-        print(aux[:d*Nc])
+        #print(self.G.size)
+        #print(sol['z'].size)
+        vec_forces = -self.G.T * sol['z'] #THIS IS IT?
+        #print(aux[:d*Nc])
 
         #Returning forces in each cell
-        vec_forces = sol['z']
-        return np.array(vec_forces)[:d*Nc].reshape((d, Nc)).T
+        #vec_forces = sol['z']
+        return np.array(vec_forces)[:d*Nc].reshape((Nc, d))
         

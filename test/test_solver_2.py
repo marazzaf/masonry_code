@@ -3,6 +3,7 @@ import sys
 sys.path.append('../utils')
 from graph import *
 from energy import *
+import matplotlib.pyplot as plt
 
 #Material parameter for friction
 s = 1
@@ -15,6 +16,7 @@ points = np.array([[1/6,1/6], [1/2,1/6], [5/6,1/6], [1/6,1/2], [1/2,1/2], [5/6,1
 
 GM = GranularMaterial(points, d, s)
 
+##Plotting points
 #GM.plot_graph()
 #GM.plot_voronoi()
 
@@ -24,7 +26,8 @@ force_bnd = np.zeros((d,len(GM.bnd)))
 i = 0
 for c in GM.bnd:
     GM.graph.nodes[c]['id_cell'] = i
-    force_bnd[:,i] = GM.pos_bary - GM.voronoi.points[c] #vector pointing towards the barycenter
+    force_bnd[:,i] = compression * (GM.pos_bary - GM.graph.nodes[c]['pos']) #vector pointing towards the barycenter
+    plt.quiver(GM.voronoi.points[c][0], GM.voronoi.points[c][1], force_bnd[0,i], force_bnd[1,i]) #For plot
     i += 1
 
 #Assembling the system to minimize the energy
@@ -32,13 +35,10 @@ E = Energy(GM, force_bnd)
 
 #Computing the forces
 f = E.solve(d, GM.Ne)
-sys.exit()
+print(f)
 
 #Plotting the forces
-import matplotlib.pyplot as plt
-voronoi_plot_2d(GM.voronoi)
-for c1,c2 in GM.graph.edges:
-    id_f = GM.graph[c1][c2]['id_edge']
-    bary = GM.graph[c1][c2]['bary']
-    plt.quiver(bary[0], bary[1], f[id_f][0], f[id_f][1])
+for c in GM.graph.nodes:
+    bary = GM.graph.nodes[c]['bary']
+    plt.quiver(bary[0], bary[1], f[c,0], f[c,1])
 plt.show()
