@@ -27,7 +27,7 @@ GM = GranularMaterial(points, d, s)
 compression = 5e1 #compressive force
 force_bnd = np.zeros((d,len(GM.bnd)))
 i = 0
-##Anisitrpoic force
+##Anisotropic force
 #for c in GM.bnd:
 #    GM.graph.nodes[c]['id_cell'] = i
 #    pos = GM.graph.nodes[c]['pos']

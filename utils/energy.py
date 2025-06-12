@@ -94,8 +94,14 @@ class Energy:
         self.b = matrix(b, tc='d')
 
         #Test
-        self.A = spmatrix(1, [0, 1], [0, 1], size=(d,d*Nc+Ne))
-        #print(self.A)
+        #Blocking disp of first cell
+        #self.A = spmatrix(1, [0, 1], [0, 1], size=(d,d*Nc+Ne))
+        #Block disp of boundary cells on bottom left and right
+        I = []
+        J = []
+        x = np.ones(2*len(self.bnd))
+        for c in self.bnd:
+            #Continue
 
         ##lhs equality constraint
         #A = np.arange(1, d*Nc+1)
