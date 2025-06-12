@@ -4,7 +4,8 @@ sys.path.append('../utils')
 from graph import *
 from energy import *
 import matplotlib.pyplot as plt
-import pyvoro
+#import pyvoro
+
 #Material parameter for friction
 s = 1
 
@@ -14,18 +15,20 @@ d = 2 #Space dimension
 #Getting the points
 points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]])
 
-#Voronoi mesh creation
-voronoi = pyvoro.compute_2d_voronoi(
-    points.tolist(),                        # seed points
-    [[0, 1], [0, 1]],                      # bounding box
-    0.1                                    # block size ≈ sqrt(cell area)
-)
+##Voronoi mesh creation
+#voronoi = pyvoro.compute_2d_voronoi(
+#    points.tolist(),                        # seed points
+#    [[0, 1], [0, 1]],                      # bounding box
+#    0.1                                    # block size ≈ sqrt(cell area)
+#)
 
 #Creating the graph
-GM = GranularMaterial(voronoi, d, s)
+GM = GranularMaterial(points, d, s)
 
 ##Plotting points
 #GM.plot_graph()
+GM.plot_voronoi()
+sys.exit()
 
 #Creating a force on the boundary cells
 compression = 1e2 #compressive force

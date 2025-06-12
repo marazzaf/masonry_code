@@ -1,19 +1,30 @@
 import networkx as nx
-#from scipy.spatial import Voronoi,voronoi_plot_2d
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import pyvista as pv
+from voro2pv import voro_cells_to_polydata
+import pyvoro
 
 class GranularMaterial:
-    def __init__(self, voronoi, d, s_T=1., L=1.):
+    def __init__(self, points, d, s_T=1., L=1.):
         self.d = d
         self.s_T = s_T #tresca friction
         self.L = L #Size of square domain
-        self.voronoi = voronoi
+        self.points = points
         self.graph = nx.Graph()
         self.bnd = set()
+        self.compute_voronoi()
         self.fill_graph()
         self.bary_domain()
+
+    def compute_voronoi(self):
+        size = np.sqrt(self.L**2 / len(self.points))
+        #Voronoi mesh creation
+        voronoi = pyvoro.compute_2d_voronoi(self.points.tolist(),                        # seed points
+            [[0, self.L], [0, self.L]],                      # bounding box
+            size)                                    # block size ≈ sqrt(cell area)
+        self.voronoi = voronoi
 
     def fill_graph(self): #Update here
         self.fill_cells()
@@ -66,9 +77,15 @@ class GranularMaterial:
         nx.draw(self.graph, with_labels=True)
         plt.show()
 
-    def plot_voronoi(self): #Need to update it
-        voronoi_plot_2d(self.voronoi)
-        plt.show()       
+    def plot_voronoi(self):
+        mesh = voro_cells_to_polydata(self.voronoi) #Converting voronoi mesh
+
+        #Plot
+        p = pv.Plotter()
+        p.add_mesh(mesh, show_edges=True, color="white", line_width=1)
+        p.add_points(np.column_stack([self.points, np.zeros(len(self.points))]),
+                     color="red", point_size=8)
+        p.show()     
 
     #def compute_edge_quantities(self):
     #    i = 0 #Numbering for minimizing the energy
