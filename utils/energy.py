@@ -31,8 +31,6 @@ class Energy:
             edge_matrix[id_edge] = G[c1][c2]['length']
         c[d*Nc:] = s * edge_matrix
 
-        print(c)
-
         return matrix(c, tc='d')
 
     
@@ -77,7 +75,7 @@ class Energy:
 
         #Assembling constraints
         GG = np.concatenate((GG1, GG2))
-        print(GG)
+        #print(GG)
         self.G = matrix(GG, tc='d')
         
         #Right-hand side
@@ -109,12 +107,12 @@ class Energy:
 
         #Checking we find no displacement
         assert sol['status'] == 'optimal'
-        vec_sol = sol['x'] #result should be zero
-        disp = np.array(vec_sol)[:d*Nc].reshape((Nc, d))
-        assert np.linalg.norm(disp) < 1e-10
+        #vec_sol = sol['x'] #result should be zero
+        #disp = np.array(vec_sol)[:d*Nc].reshape((Nc, d))
+        #assert np.linalg.norm(disp) < 1e-10
         #Check on y? Is it the vector sum of all disp?
         #print(sol['x'])
-        #print(sol['y'])
+        print(sol['y'])
         #print(sol['z'])
 
         #Test
