@@ -93,14 +93,19 @@ class Energy:
         b = np.zeros(d)
         self.b = matrix(b, tc='d')
 
-        #lhs equality constraint
-        A = np.arange(1, d*Nc+1)
-        A %= 2
-        B = (A + 1) % 2
-        A = np.array((A, B))
-        B = np.zeros((d,Ne))
-        A = np.concatenate((A, B), axis=1)
-        self.A = matrix(A, tc='d')
+        #Test
+        self.A = spmatrix(1, [0, 1], [0, 1], size=(d,d*Nc+Ne))
+        #print(self.A)
+
+        ##lhs equality constraint
+        #A = np.arange(1, d*Nc+1)
+        #A %= 2
+        #B = (A + 1) % 2
+        #A = np.array((A, B))
+        #B = np.zeros((d,Ne))
+        #A = np.concatenate((A, B), axis=1)
+        #print(A)
+        ##self.A = matrix(A, tc='d')
 
     def solve(self, d, Nc):
         sol = solvers.lp(self.E, self.G, self.h, self.A, self.b)
@@ -111,8 +116,10 @@ class Energy:
         #disp = np.array(vec_sol)[:d*Nc].reshape((Nc, d))
         #assert np.linalg.norm(disp) < 1e-10
         #Check on y? Is it the vector sum of all disp?
-        #print(sol['x'])
-        print(sol['y'])
+        print(sol['x'])
+        #print(sol['y'])
+        test = self.A * sol['x']
+        print(test)
         #print(sol['z'])
 
         #Test

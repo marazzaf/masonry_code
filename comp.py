@@ -24,7 +24,7 @@ GM = GranularMaterial(points, d, s)
 #GM.plot_voronoi()
 
 #Creating a force on the boundary cells
-compression = 1e1 #compressive force
+compression = 5e1 #compressive force
 force_bnd = np.zeros((d,len(GM.bnd)))
 i = 0
 ##Anisitrpoic force
