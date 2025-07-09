@@ -17,23 +17,33 @@ points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]])
 
 #Creating the graph
 GM = GranularMaterial(points, d, s)
+print(GM.graph.edges(data=True))
+#sys.exit()
 
-#Plotting points
-#print(GM.graph.edges(data=True))
-GM.plot_graph()
-sys.exit()
-GM.plot_voronoi()
-sys.exit()
+##Plotting points
+#GM.plot_graph()
+#GM.plot_voronoi()
 
-#Creating a force on the boundary cells
+#Neumann condition on boundary edges
 compression = 1e2 #compressive force
-force_bnd = np.zeros((d,len(GM.bnd)))
-i = 0
-for c in GM.bnd:
-    GM.graph.nodes[c]['id_cell'] = i
-    force_bnd[:,i] = compression * (GM.pos_bary - GM.graph.nodes[c]['pos']) #vector pointing towards the barycenter
-    plt.quiver(GM.graph.nodes[c]['pos'][0], GM.graph.nodes[c]['pos'][1], force_bnd[0,i], force_bnd[1,i], color='red') #For plot
-    i += 1
+stress_bnd = np.zeros((d, GM.Nbe))
+for c1,c2 in GM.graph.edges:
+    id_e = GM.graph[c1][c2]['id_edge']
+    normal = GM.graph[c1][c2]['normal']
+    stress_bnd[:,id_e] = -compression * normal
+
+print(stress_bnd)
+sys.exit()
+
+##Creating a force on the boundary cells
+#compression = 1e2 #compressive force
+#force_bnd = np.zeros((d,len(GM.bnd)))
+#i = 0
+#for c in GM.bnd:
+#    GM.graph.nodes[c]['id_cell'] = i
+#    force_bnd[:,i] = compression * (GM.pos_bary - GM.graph.nodes[c]['pos']) #vector pointing towards the barycenter
+#    plt.quiver(GM.graph.nodes[c]['pos'][0], GM.graph.nodes[c]['pos'][1], force_bnd[0,i], force_bnd[1,i], color='red') #For plot
+#    i += 1
 #plt.show()
 
 #Assembling the system to minimize the energy

@@ -26,6 +26,7 @@ class Energy:
         #Energy for Tresca friction law
         s = GM.s_T #Tresca friction parameter
         edge_matrix = np.zeros(Ne)
+        ##Need to introduce the reconstruction here!
         for c1,c2 in G.edges:
             id_edge = G[c1][c2]['id_edge']
             edge_matrix[id_edge] = G[c1][c2]['length']

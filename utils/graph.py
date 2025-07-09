@@ -5,6 +5,7 @@ import sys
 import pyvista as pv
 from voro2pv import voro_cells_to_polydata
 import pyvoro
+from reconstructions import *
 
 class GranularMaterial:
     def __init__(self, points, d, s_T=1., L=1.):
@@ -29,7 +30,7 @@ class GranularMaterial:
     def fill_graph(self):
         self.fill_cells()
         self.fill_edges()
-        #self.boundary_edge_computation()
+        self.boundary_edge_computation()
 
     def fill_cells(self):
         for cid, cell in enumerate(self.voronoi):
@@ -55,43 +56,54 @@ class GranularMaterial:
                 verts_i = np.asarray(cell_i["vertices"])[vidx]  # shape (2,2)
                 v1, v2 = verts_i 
                 barycentre = .5 * (v1 + v2)
+                #Compute unit tangent
                 length = np.linalg.norm(v1 - v2)
+                unit_tangent = (v1 - v2) / length
 
                 c1,c2 = sorted((cid_i, cid_j)) #c1 < c2 always
                 if c1 < 0: #Boundary edge
                     self.bnd.add(c2) #Mark cell as being on the boundary
-                    #Test to see if cell c1 already exits!
-                    if not G.has_node(c1):
-                        G.add_edge(c1, c2, bary=barycentre, length=length, bnd=True) #Adding boundary edge
+
+                    #Computing unit normal
+                    normal = np.array([-unit_normal[1], unit_normal[0]])
+                    normal *= -np.dot(normal, G.nodes[c2]['pos'] - barycentre)
+                    
+                    if not G.has_node(c1): #Test to see if cell c1 already exits!
+                        G.add_edge(c1, c2, bary=barycentre, length=length, normal=normal, bnd=True) #Adding boundary edge
                     else:
                         c1p = -self.Nc + c1
-                        print(c1p)
-                        G.add_edge(c1p, c2, bary=barycentre, length=length, bnd=True) #Adding boundary edge
-                    continue
-
-                #Computing tangent and normal
-                unit_tangent = (v1 - v2) / length
-                normal = G.nodes[c2]['pos'] - G.nodes[c1]['pos'] #normal from - towards +
-                unit_normal = normal / np.linalg.norm(normal)
-
-                G.add_edge(c1, c2, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i, bnd=False) #add interal edge
-                i += 1
-                self.Ne += 1 #Increment number of internal edges
+                        G.add_edge(c1p, c2, bary=barycentre, length=length, normal=normal, bnd=True) #Adding boundary edge
+                else: #internal edge
+                    #Computing unit normal
+                    normal = G.nodes[c2]['pos'] - G.nodes[c1]['pos'] #normal from - towards +
+                    unit_normal = normal / np.linalg.norm(normal)
+                    G.add_edge(c1, c2, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i, bnd=False) #add interal edge
+                    i += 1
+                    self.Ne += 1 #Increment number of internal edges
 
     def boundary_edge_computation(self):
         G = self.graph
-        for c1,c2 in G.edges:
-            c1, c2 = sorted((c1, c2))
+        self.Nbe = len(G.edges) - self.Ne #number of boundary edges
+        i = 0
+        for cc1,cc2 in G.edges:
+            c1, c2 = sorted((cc1, cc2))
             point = G[c1][c2]['bary']
             if G[c1][c2]['bnd']: #c1 is the 'false' cell
-                triangle = [G[c2]['pos']] #Will be used to compute barycentric coordinates
+                triangle_id = [c2]
+                triangle_coord = [G.nodes[c2]['pos']] #Will be used to compute barycentric coordinates
                 for c3 in G.neighbors(c2):
                     #Looping in neighbors of boundary cell
-                    if len(triangle) < 3:
-                        triangle.append(G[c3]['pos'])
-                    elif len(triangle) >= 3:
+                    if len(triangle_id) < 3 and c3 >= 0:
+                        triangle_id.append(c3)
+                        triangle_coord.append(G.nodes[c3]['pos'])
+                    elif len(triangle_id) >= 3:
                         break
-                bary_coord = barycentric_coordinates_triangle(point, triangle)
+                #Compute barycentric coordinates in the triangle
+                bary_coord = barycentric_coordinates_triangle(point, triangle_coord)
+                G[c1][c2]['bary_coord'] = bary_coord
+                G[c1][c2]['bary_points'] = triangle_id
+                G[c1][c2]['id_edge'] = self.Ne + i #Used for stress boundary conditions
+                i += 1
                 
         
     def plot_graph(self):
