@@ -32,20 +32,11 @@ for c1,c2 in GM.graph.edges:
         id_e = GM.graph[c1][c2]['id_edge'] - GM.Ne
         normal = GM.graph[c1][c2]['normal']
         stress_bnd[:,id_e] = -compression * normal
+        #plt.quiver(GM.graph[c1][c2]['bary'][0], GM.graph[c1][c2]['bary'][1], stress_bnd[0,id_e], stress_bnd[1,id_e], color='red') #For plot
+#plt.show()
 
 #print(stress_bnd)
 #sys.exit()
-
-##Creating a force on the boundary cells
-#compression = 1e2 #compressive force
-#force_bnd = np.zeros((d,len(GM.bnd)))
-#i = 0
-#for c in GM.bnd:
-#    GM.graph.nodes[c]['id_cell'] = i
-#    force_bnd[:,i] = compression * (GM.pos_bary - GM.graph.nodes[c]['pos']) #vector pointing towards the barycenter
-#    plt.quiver(GM.graph.nodes[c]['pos'][0], GM.graph.nodes[c]['pos'][1], force_bnd[0,i], force_bnd[1,i], color='red') #For plot
-#    i += 1
-#plt.show()
 
 #Assembling the system to minimize the energy
 E = Energy(GM, stress_bnd)
@@ -58,6 +49,7 @@ print(f)
 
 #Plotting the forces
 for c in GM.graph.nodes:
-    bary = GM.graph.nodes[c]['pos']
-    plt.quiver(bary[0], bary[1], f[c,0], f[c,1])
+    if c >= 0:
+        bary = GM.graph.nodes[c]['pos']
+        plt.quiver(bary[0], bary[1], f[c,0], f[c,1])
 plt.show()

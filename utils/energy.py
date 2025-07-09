@@ -22,8 +22,8 @@ class Energy:
             if G[c1][c2]['bnd']:
                 id_e = G[c1][c2]['id_edge'] - GM.Ne
                 for id_c,coord in zip(G[c1][c2]['bary_points'], G[c1][c2]['bary_coord']):
-                    c[d*id_c] += coord * G[c1][c2]['length'] * stress_bnd[0,id_e] #x component
-                    c[d*id_c+1] += coord * G[c1][c2]['length'] * stress_bnd[1,id_e] #y component
+                    c[d*id_c] -= coord * G[c1][c2]['length'] * stress_bnd[0,id_e] #x component
+                    c[d*id_c+1] -= coord * G[c1][c2]['length'] * stress_bnd[1,id_e] #y component
 
         #Energy for Tresca friction law
         s = GM.s_T #Tresca friction parameter
@@ -32,7 +32,7 @@ class Energy:
             if not G[c1][c2]['bnd']:
                 id_edge = G[c1][c2]['id_edge']
                 edge_matrix[id_edge] = G[c1][c2]['length']
-        c[d*Nc:] = s * edge_matrix
+        c[d*Nc:] = s * edge_matrix #Only involding cell dofs here
 
         return matrix(c, tc='d')
 
@@ -128,8 +128,8 @@ class Energy:
         aux1 = np.array(sol['z'][:Ne]).reshape(Ne) #Multiply by each edge normal to have the normal component of the force at each edge
         aux2 = sol['z'][Ne:]
         aux2 = np.array(aux2).reshape((Ne,d))
-        print(aux2)
-        sys.exit()
+        #print(aux2)
+        #sys.exit()
         aux2 = -aux2[:,0] + aux2[:,1] #Summing the components in each direction along t
         aux = np.array([aux1, aux2]).T #Force at each edge in (n,t) coordinates
         
@@ -137,10 +137,11 @@ class Energy:
         vec_forces = aux.copy()
         G =  GM.graph
         for c1,c2 in G.edges:
-            id_edge = G[c1][c2]['id_edge']
-            n = G[c1][c2]['normal']
-            t = G[c1][c2]['tangent']
-            vec_forces[id_edge,:] = vec_forces[0] * n + vec_forces[1] * t
+            if not G[c1][c2]['bnd']:
+                id_edge = G[c1][c2]['id_edge']
+                n = G[c1][c2]['normal']
+                t = G[c1][c2]['tangent']
+                vec_forces[id_edge,:] = vec_forces[0] * n + vec_forces[1] * t
         return vec_forces #Forces in (e_1,e_2) basis
 
         ##Returning forces in each cell
