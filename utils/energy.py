@@ -125,6 +125,8 @@ class Energy:
         aux1 = np.array(sol['z'][:Ne]).reshape(Ne) #Multiply by each edge normal to have the normal component of the force at each edge
         aux2 = sol['z'][Ne:]
         aux2 = np.array(aux2).reshape((Ne,d))
+        print(aux2)
+        sys.exit()
         aux2 = -aux2[:,0] + aux2[:,1] #Summing the components in each direction along t
         aux = np.array([aux1, aux2]).T #Force at each edge in (n,t) coordinates
         
