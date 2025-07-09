@@ -25,7 +25,7 @@ GM = GranularMaterial(points, d, s)
 #GM.plot_voronoi()
 
 #Neumann condition on boundary edges
-compression = 1e2 #compressive force
+compression = 1 #1e2 #compressive force
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
     if GM.graph[c1][c2]['bnd']:
@@ -49,11 +49,11 @@ for c1,c2 in GM.graph.edges:
 
 #Assembling the system to minimize the energy
 E = Energy(GM, stress_bnd)
-print(E.E)
-sys.exit()
+#print(E.E)
+#sys.exit()
 
 #Computing the forces
-f = E.solve(d, GM.Nc, GM.Ne)
+f = E.solve(GM)
 print(f)
 
 #Plotting the forces
