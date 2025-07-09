@@ -65,8 +65,10 @@ class GranularMaterial:
                     self.bnd.add(c2) #Mark cell as being on the boundary
 
                     #Computing unit normal
-                    normal = np.array([-unit_normal[1], unit_normal[0]])
-                    normal *= -np.dot(normal, G.nodes[c2]['pos'] - barycentre)
+                    normal = np.array([-unit_tangent[1], unit_tangent[0]])
+                    opposite_direction = G.nodes[c2]['pos'] - barycentre
+                    opposite_direction /= np.linalg.norm(opposite_direction)
+                    normal *= -np.dot(normal, opposite_direction)
                     
                     if not G.has_node(c1): #Test to see if cell c1 already exits!
                         G.add_edge(c1, c2, bary=barycentre, length=length, normal=normal, bnd=True) #Adding boundary edge

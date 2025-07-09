@@ -17,7 +17,7 @@ points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]])
 
 #Creating the graph
 GM = GranularMaterial(points, d, s)
-print(GM.graph.edges(data=True))
+#print(GM.graph.edges(data=True))
 #sys.exit()
 
 ##Plotting points
@@ -28,12 +28,13 @@ print(GM.graph.edges(data=True))
 compression = 1e2 #compressive force
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
-    id_e = GM.graph[c1][c2]['id_edge']
-    normal = GM.graph[c1][c2]['normal']
-    stress_bnd[:,id_e] = -compression * normal
+    if GM.graph[c1][c2]['bnd']:
+        id_e = GM.graph[c1][c2]['id_edge'] - GM.Ne
+        normal = GM.graph[c1][c2]['normal']
+        stress_bnd[:,id_e] = -compression * normal
 
-print(stress_bnd)
-sys.exit()
+#print(stress_bnd)
+#sys.exit()
 
 ##Creating a force on the boundary cells
 #compression = 1e2 #compressive force
@@ -47,8 +48,9 @@ sys.exit()
 #plt.show()
 
 #Assembling the system to minimize the energy
-E = Energy(GM, force_bnd)
-#print(E.E)
+E = Energy(GM, stress_bnd)
+print(E.E)
+sys.exit()
 
 #Computing the forces
 f = E.solve(d, GM.Nc, GM.Ne)

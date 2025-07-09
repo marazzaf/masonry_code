@@ -4,13 +4,13 @@ import numpy as np
 import sys
 
 class Energy:
-    def __init__(self, GM, force_bnd): #GM is a GranularMaterial
-        self.E = self.energy(GM, force_bnd)
+    def __init__(self, GM, stress_bnd): #GM is a GranularMaterial
+        self.E = self.energy(GM, stress_bnd)
         self.inequality_constraint(GM)
         self.equality_constraint(GM)
     
 
-    def energy(self, GM, force_bnd):
+    def energy(self, GM, stress_bnd):
         G = GM.graph #Graph of the network
         d = GM.d #dimension
         Nc = GM.Nc #Number of cells
@@ -18,18 +18,20 @@ class Energy:
         c = np.zeros(d*Nc + Ne) #Vector for energy
 
         #Energy for external forces
-        for c1 in GM.bnd:
-            id_cell = G.nodes[c1]['id_cell']
-            c[d*c1] = -force_bnd[0,id_cell] #x component
-            c[d*c1+1] = -force_bnd[1,id_cell] #y component
+        for c1,c2 in G.edges:
+            if G[c1][c2]['bnd']:
+                id_e = G[c1][c2]['id_edge'] - GM.Ne
+                for id_c,coord in zip(G[c1][c2]['bary_points'], G[c1][c2]['bary_coord']):
+                    c[d*id_c] += coord * G[c1][c2]['length'] * stress_bnd[0,id_e] #x component
+                    c[d*id_c+1] += coord * G[c1][c2]['length'] * stress_bnd[1,id_e] #y component
 
         #Energy for Tresca friction law
         s = GM.s_T #Tresca friction parameter
         edge_matrix = np.zeros(Ne)
-        ##Need to introduce the reconstruction here!
         for c1,c2 in G.edges:
-            id_edge = G[c1][c2]['id_edge']
-            edge_matrix[id_edge] = G[c1][c2]['length']
+            if not G[c1][c2]['bnd']:
+                id_edge = G[c1][c2]['id_edge']
+                edge_matrix[id_edge] = G[c1][c2]['length']
         c[d*Nc:] = s * edge_matrix
 
         return matrix(c, tc='d')
