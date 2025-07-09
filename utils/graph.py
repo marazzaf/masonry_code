@@ -41,11 +41,12 @@ class GranularMaterial:
 
     def fill_edges(self):
         G = self.graph
+        self.Ne = 0
         i = 0 #Numbering of edges. Useful for the energy
         for cid_i, cell_i in enumerate(self.voronoi):
             for face in cell_i["faces"]:
                 cid_j = face["adjacent_cell"]
-                print(cid_i,cid_j)
+                #print(cid_i,cid_j)
                 if G.has_edge(cid_i, cid_j):     # skip duplicates
                     continue
 
@@ -56,25 +57,26 @@ class GranularMaterial:
                 barycentre = .5 * (v1 + v2)
                 length = np.linalg.norm(v1 - v2)
 
-                c1,c2 = sorted((cid_i, cid_j)) #cid_i < cid_j always
-                if c1 < 0: #Boundary edge #cid_j
-                    self.bnd.add(c2) #Mark cell as being on the boundary #cid_i
+                c1,c2 = sorted((cid_i, cid_j)) #c1 < c2 always
+                if c1 < 0: #Boundary edge
+                    self.bnd.add(c2) #Mark cell as being on the boundary
                     #Test to see if cell c1 already exits!
                     if not G.has_node(c1):
                         G.add_edge(c1, c2, bary=barycentre, length=length, bnd=True) #Adding boundary edge
                     else:
-                        #See what to do here!!!!
+                        c1p = -self.Nc + c1
+                        print(c1p)
+                        G.add_edge(c1p, c2, bary=barycentre, length=length, bnd=True) #Adding boundary edge
                     continue
 
                 #Computing tangent and normal
                 unit_tangent = (v1 - v2) / length
-                normal = self.graph.nodes[c2]['pos'] - self.graph.nodes[c1]['pos'] #normal from - towards +
+                normal = G.nodes[c2]['pos'] - G.nodes[c1]['pos'] #normal from - towards +
                 unit_normal = normal / np.linalg.norm(normal)
 
-                self.graph.add_edge(c1, c2, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i, bnd=False) #add interal edge
+                G.add_edge(c1, c2, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i, bnd=False) #add interal edge
                 i += 1
-        
-        self.Ne = len(self.graph.edges) #Number of edges
+                self.Ne += 1 #Increment number of internal edges
 
     def boundary_edge_computation(self):
         G = self.graph

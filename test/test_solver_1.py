@@ -19,7 +19,7 @@ points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]])
 GM = GranularMaterial(points, d, s)
 
 #Plotting points
-print(GM.graph.edges(data=True))
+#print(GM.graph.edges(data=True))
 GM.plot_graph()
 sys.exit()
 GM.plot_voronoi()
