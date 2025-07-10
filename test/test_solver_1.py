@@ -48,8 +48,9 @@ f = E.solve(GM)
 print(f)
 
 #Plotting the forces
-for c in GM.graph.nodes:
-    if c >= 0:
-        bary = GM.graph.nodes[c]['pos']
-        plt.quiver(bary[0], bary[1], f[c,0], f[c,1])
+for c1,c2 in GM.graph.edges:
+    if c1 >= 0 and c2 >= 0:
+        bary = GM.graph[c1][c2]['bary']
+        id_e = GM.graph[c1][c2]['id_edge']
+        plt.quiver(bary[0], bary[1], f[id_e,0], f[id_e,1])
 plt.show()
