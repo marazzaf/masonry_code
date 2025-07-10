@@ -25,7 +25,7 @@ GM = GranularMaterial(points, d, s)
 #GM.plot_voronoi()
 
 #Neumann condition on boundary edges
-compression = 1 #1e2 #compressive force
+compression = 1e-7 #1e2 #compressive force
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
     if GM.graph[c1][c2]['bnd']:
@@ -50,10 +50,12 @@ print(f)
 
 #Plotting the forces
 for c1,c2 in GM.graph.edges:
-    if c1 >= 0 and c2 >= 0:
+    if not GM.graph[c1][c2]['bnd']:
         bary = GM.graph[c1][c2]['bary']
         id_e = GM.graph[c1][c2]['id_edge']
         n = GM.graph[c1][c2]['normal']
-        plt.quiver(bary[0], bary[1], n[0], n[1])
+        #plt.quiver(bary[0], bary[1], n[0], n[1])
+        t = GM.graph[c1][c2]['tangent']
+        plt.quiver(bary[0], bary[1], t[0], t[1])
         #plt.quiver(bary[0], bary[1], f[id_e,0], f[id_e,1])
 plt.show()
