@@ -15,7 +15,7 @@ d = 2 #Space dimension
 #points = np.array([[1/6,1/6], [1/2,1/6], [5/6,1/6], [1/6,1/2], [1/2,1/2], [5/6,1/2], [1/6,5/6], [1/2,5/6], [5/6,5/6]])
 
 #Cartesian grid example
-n = 10  # divisions along each axis
+n = 2  # divisions along each axis
 
 # Create linspace for the grid
 x = np.linspace(0, 1, n+1)
@@ -78,8 +78,8 @@ for c1,c2 in GM.graph.edges:
         bary = GM.graph[c1][c2]['bary']
         id_e = GM.graph[c1][c2]['id_edge']
         n = GM.graph[c1][c2]['normal']
-        #plt.quiver(bary[0], bary[1], n[0], n[1])
+        plt.quiver(bary[0], bary[1], n[0], n[1], color='blue')
         t = GM.graph[c1][c2]['tangent']
-        plt.quiver(bary[0], bary[1], t[0], t[1])
-        #plt.quiver(bary[0], bary[1], f[id_e,0], f[id_e,1])
+        #plt.quiver(bary[0], bary[1], t[0], t[1])
+        plt.quiver(bary[0], bary[1], f[id_e,0], f[id_e,1])
 plt.show()
