@@ -121,6 +121,8 @@ class Energy:
 
         #Checking solution converges
         assert sol['status'] == 'optimal'
+        print(sol['z'])
+        #sys.exit()
 
         #Assembling forces at the internal edges
         d = GM.d
@@ -132,16 +134,17 @@ class Energy:
         #sys.exit()
         aux2 = -aux2[:,0] + aux2[:,1] #Summing the components in each direction along t
         aux = np.array([aux1, aux2]).T #Force at each edge in (n,t) coordinates
+        #print(aux)
         
         #Returning forces in each internal cell
-        vec_forces = aux.copy()
+        vec_forces = np.zeros_like(aux)
         G =  GM.graph
         for c1,c2 in G.edges:
             if not G[c1][c2]['bnd']:
                 id_edge = G[c1][c2]['id_edge']
                 n = G[c1][c2]['normal']
                 t = G[c1][c2]['tangent']
-                vec_forces[id_edge,:] = vec_forces[0] * n + vec_forces[1] * t
+                vec_forces[id_edge,:] = aux[id_edge,0] * n + aux[id_edge,1] * t
         return vec_forces #Forces in (e_1,e_2) basis
 
         ##Returning forces in each cell
