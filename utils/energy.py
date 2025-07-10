@@ -95,9 +95,10 @@ class Energy:
         b = np.zeros(d)
         self.b = matrix(b, tc='d')
 
-        #Test
-        #Blocking disp of first cell
-        self.A = spmatrix(1, [0, 1], [0, 1], size=(d,d*Nc+Ne))
+        ##Test
+        ##Blocking disp of first cell
+        #self.A = spmatrix(1, [0, 1], [0, 1], size=(d,d*Nc+Ne))
+        
         ##Block disp of boundary cells on bottom left and right
         #I = []
         #J = []
@@ -105,19 +106,27 @@ class Energy:
         #for c in self.bnd:
         #    #Continue
 
-        ##lhs equality constraint
-        #A = np.arange(1, d*Nc+1)
-        #A %= 2
-        #B = (A + 1) % 2
-        #A = np.array((A, B))
-        #B = np.zeros((d,Ne))
-        #A = np.concatenate((A, B), axis=1)
+        #lhs equality constraint
+        A = np.arange(1, d*Nc+1)
+        A %= 2
+        B = (A + 1) % 2
+        A = np.array((A, B))
+        B = np.zeros((d,Ne))
+        A = np.concatenate((A, B), axis=1)
         #print(A)
-        ##self.A = matrix(A, tc='d')
+        self.A = matrix(A, tc='d')
 
     def solve(self, GM):
         #Solving linear problem
         sol = solvers.lp(self.E, self.G, self.h, self.A, self.b)
+        #print(dict(sol))
+        #sys.exit()
+
+        ##Test
+        #en = self.E.T * sol['x']
+        #print(en)
+        #print(sol['x'])
+        #sys.exit()
 
         #Checking solution converges
         assert sol['status'] == 'optimal'

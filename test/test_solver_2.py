@@ -55,8 +55,10 @@ for c1,c2 in GM.graph.edges:
     if GM.graph[c1][c2]['bnd']:
         id_e = GM.graph[c1][c2]['id_edge'] - GM.Ne
         normal = GM.graph[c1][c2]['normal']
-        stress_bnd[:,id_e] = -compression * normal
-        #plt.quiver(GM.graph[c1][c2]['bary'][0], GM.graph[c1][c2]['bary'][1], stress_bnd[0,id_e], stress_bnd[1,id_e], color='red') #For plot
+        bary = GM.graph[c1][c2]['bary']
+        if bary[0] < .1 or bary[0] > .9:
+            stress_bnd[:,id_e] = -compression * normal
+        plt.quiver(GM.graph[c1][c2]['bary'][0], GM.graph[c1][c2]['bary'][1], stress_bnd[0,id_e], stress_bnd[1,id_e], color='red') #For plot
 #plt.show()
 
 #print(stress_bnd)
@@ -81,5 +83,6 @@ for c1,c2 in GM.graph.edges:
         plt.quiver(bary[0], bary[1], n[0], n[1], color='blue')
         t = GM.graph[c1][c2]['tangent']
         #plt.quiver(bary[0], bary[1], t[0], t[1])
-        plt.quiver(bary[0], bary[1], f[id_e,0], f[id_e,1])
+        if not np.isclose(np.linalg.norm(f[id_e,:]), 0.0):
+            plt.quiver(bary[0], bary[1], f[id_e,0], f[id_e,1])
 plt.show()
