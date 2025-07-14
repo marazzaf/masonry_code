@@ -144,21 +144,17 @@ class Energy:
         aux2 = -aux2[:,0] + aux2[:,1] #Summing the components in each direction along t
         aux = np.array([aux1, aux2]).T #Force at each edge in (n,t) coordinates
         #print(aux)
-        
-        #Returning forces in each internal cell
-        vec_forces = np.zeros_like(aux)
-        G =  GM.graph
-        for c1,c2 in G.edges:
-            if not G[c1][c2]['bnd']:
-                id_edge = G[c1][c2]['id_edge']
-                n = G[c1][c2]['normal']
-                t = G[c1][c2]['tangent']
-                vec_forces[id_edge,:] = aux[id_edge,0] * n + aux[id_edge,1] * t
-        return vec_forces #Forces in (e_1,e_2) basis
 
-        ##Returning forces in each cell
-        #vec_forces = sol['z']
-        #print(vec_forces)
-        #sys.exit()
-        #return np.array(vec_forces)[:d*Nc].reshape((Nc, d))
+        return aux
+        
+        ##Returning forces in each internal cell
+        #vec_forces = np.zeros_like(aux)
+        #G =  GM.graph
+        #for c1,c2 in G.edges:
+        #    if not G[c1][c2]['bnd']:
+        #        id_edge = G[c1][c2]['id_edge']
+        #        n = G[c1][c2]['normal']
+        #        t = G[c1][c2]['tangent']
+        #        vec_forces[id_edge,:] = aux[id_edge,0] * n + aux[id_edge,1] * t
+        #return vec_forces #Forces in (e_1,e_2) basis
         
