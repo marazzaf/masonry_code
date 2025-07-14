@@ -34,6 +34,9 @@ class Energy:
                 edge_matrix[id_edge] = G[c1][c2]['length']
         c[d*Nc:] = s * edge_matrix #Only involding cell dofs here
 
+        print(c)
+        sys.exit()
+
         return matrix(c, tc='d')
 
     
@@ -130,13 +133,13 @@ class Energy:
 
         #Checking solution converges
         assert sol['status'] == 'optimal'
-        print(sol['z'])
+        #print(sol['z'])
         #sys.exit()
 
         #Assembling forces at the internal edges
         d = GM.d
         Ne = GM.Ne
-        aux1 = np.array(sol['z'][:Ne]).reshape(Ne) #Multiply by each edge normal to have the normal component of the force at each edge
+        aux1 = -np.array(sol['z'][:Ne]).reshape(Ne) #Normal components
         aux2 = sol['z'][Ne:]
         aux2 = np.array(aux2).reshape((Ne,d))
         #print(aux2)
@@ -146,15 +149,3 @@ class Energy:
         #print(aux)
 
         return aux
-        
-        ##Returning forces in each internal cell
-        #vec_forces = np.zeros_like(aux)
-        #G =  GM.graph
-        #for c1,c2 in G.edges:
-        #    if not G[c1][c2]['bnd']:
-        #        id_edge = G[c1][c2]['id_edge']
-        #        n = G[c1][c2]['normal']
-        #        t = G[c1][c2]['tangent']
-        #        vec_forces[id_edge,:] = aux[id_edge,0] * n + aux[id_edge,1] * t
-        #return vec_forces #Forces in (e_1,e_2) basis
-        

@@ -16,7 +16,7 @@ d = 2 #Space dimension
 #points = np.array([[1/6,1/6], [1/2,1/6], [5/6,1/6], [1/6,1/2], [1/2,1/2], [5/6,1/2], [1/6,5/6], [1/2,5/6], [5/6,5/6]])
 
 #Cartesian grid example
-n = 2  # divisions along each axis
+n = 3  # divisions along each axis
 
 # Create linspace for the grid
 x = np.linspace(0, 1, n+1)
@@ -73,7 +73,7 @@ E = Energy(GM, stress_bnd)
 #Computing the forces
 f = E.solve(GM)
 print(f)
-#sys.exit()
+sys.exit()
 
 ##Plotting the forces
 #for c1,c2 in GM.graph.edges:
