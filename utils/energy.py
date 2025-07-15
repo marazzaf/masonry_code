@@ -34,9 +34,6 @@ class Energy:
                 edge_matrix[id_edge] = G[c1][c2]['length']
         c[d*Nc:] = s * edge_matrix #Only involding cell dofs here
 
-        print(c)
-        sys.exit()
-
         return matrix(c, tc='d')
 
     

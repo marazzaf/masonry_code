@@ -72,8 +72,8 @@ E = Energy(GM, stress_bnd)
 
 #Computing the forces
 f = E.solve(GM)
-print(f)
-sys.exit()
+#print(f)
+#sys.exit()
 
 ##Plotting the forces
 #for c1,c2 in GM.graph.edges:
