@@ -2,6 +2,7 @@ import numpy as np
 from firedrake.petsc import PETSc
 from firedrake import *
 from firedrake.output import VTKFile
+import sys
 
 # === Step 1: Create hexagon vertices (radius = 1) ===
 angles = np.linspace(0, 2 * np.pi, 7)[:-1]  # 6 angles from 0 to 5π/3
@@ -24,17 +25,6 @@ plex = PETSc.DMPlex().createFromCellList(2, cells, coordinates, interpolate=True
 # === Wrap into Firedrake mesh ===
 mesh = Mesh(plex)
 
-##Mixed space
-#V = FunctionSpace(mesh, 'RT', 1)
-#W = FunctionSpace(mesh, 'DG', 1)
-#Z = V * W
-#
-##Weak form
-#sigma, xi = TrialFunctions(Z)
-#tau, zeta = TestFunctions(Z)
-#a = inner(div(sigma), zeta) * dx
-#L = Constant(0) * tau[0] * dx
-
 #Space
 V = FunctionSpace(mesh, 'RT', 1)
 
@@ -44,21 +34,30 @@ tau = TestFunction(V)
 a = inner(div(sigma), div(tau)) * dx
 L = Constant(0) * tau[0] * dx
 
-#Dirichlet BC
-zero = Constant((0, 0))
+#Impose weakly Dirichlet BC
 n = FacetNormal(mesh)
+h = CellDiameter(mesh)
+eta = 1e2
+#a += eta / h * inner(dot(sigma, n), dot(tau, n)) * ds
+#a += eta * inner(dot(sigma, n), dot(tau, n)) * ds
+g = Constant(1) #Dirichlet BC
+#L = eta / h * inner(dot(tau, n), g) * ds
+#L = eta * inner(dot(tau, n), g) * ds
+
+#Dirichlet BC strong
 x = SpatialCoordinate(mesh)
-N = Function(V).interpolate(n)
-bc = DirichletBC(V, N, "on_boundary") #x
-#bc = DirichletBC(Z.sub(0), x, 'on_boundary')
+r = sqrt(x[0]*x[0] + x[1]*x[1])
+normal = as_vector((x[0]/r, x[1]/r))
+bcs = DirichletBC(V, normal, 'on_boundary')
 
 # Solve
-res = Function(V)
-solve(a == L, res, bcs=bc)
-#res = Function(Z)
-#v_basis = VectorSpaceBasis(constant=True)
-#nullspace = MixedVectorSpaceBasis(Z, [Z.sub(0), v_basis])
-#solve(a == L, res, bcs=bc, nullspace=nullspace)
+res = Function(V, name='res')
+solve(a == L, res, bcs=bcs)
+
+#test
+test = assemble(dot(res, n) * ds) / assemble(1 * ds(mesh))
+print(test)
+#sys.exit()
 
 #output
 file = VTKFile('test.pvd')
