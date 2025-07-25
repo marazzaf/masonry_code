@@ -62,10 +62,3 @@ print(test)
 #output
 file = VTKFile('test.pvd')
 file.write(res)
-
-## Plot to check
-#import matplotlib.pyplot as plt
-#firedrake.triplot(mesh)
-#plt.gca().set_aspect('equal')
-#plt.title("Manually Created Triangle Mesh")
-#plt.show()

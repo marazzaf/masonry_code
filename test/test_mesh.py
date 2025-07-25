@@ -1,6 +1,7 @@
 import numpy as np
 from firedrake import *
 from firedrake.petsc import PETSc
+import sys
 
 # === Define geometry ===
 coordinates = np.array([
@@ -37,13 +38,28 @@ mesh = Mesh(plex)
 # === Now you can create FunctionSpaces ===
 V = FunctionSpace(mesh, "CG", 1)
 
-# Define a function and interpolate an expression
-u = Function(V, name='u')
-x, y = SpatialCoordinate(mesh)
-u.interpolate(x*y)
+#Weak form
+u = TrialFunction(V)
+v = TestFunction(V)
+a = inner(grad(u), grad(v)) * dx
+L = Constant(0) * v * dx
 
-# Plot to verify
-from firedrake.output import VTKFile
+#Creating the Dirichet BC
+bcs = []
+g = Constant(1)
+#Loop on bnd facets
+for idx, f in enumerate(boundary_facets):
+    vertices = plex.getCone(f)
+    print(vertices)
+    #Need to compute the outwards normal from the vertices?
+    bc = DirichletBC(V, g, idx)
+    bcs.append(bc)
+
+sys.exit()
+# Solve
+res = Function(V, name='res')
+solve(a == L, res, bcs=bcs)
+
+#output
 file = VTKFile('test.pvd')
-file.write(u)
-
+file.write(res)
