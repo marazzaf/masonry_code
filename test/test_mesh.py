@@ -21,12 +21,8 @@ cells = np.array([
 plex = PETSc.DMPlex().createFromCellList(2, cells, coordinates, interpolate=True)
 
 #Mark boundary facets
-boundary_facets = []
-f_start, f_end = plex.getHeightStratum(1)
-for f in range(f_start, f_end):
-    support = plex.getSupport(f)
-    if len(support) == 1:
-        boundary_facets.append(f)
+plex.markBoundaryFaces("bnd")
+boundary_facets = plex.getStratumIS("bnd", 1).getIndices()
 
 # Sort by order they appear
 for idx, facet in enumerate(boundary_facets):
