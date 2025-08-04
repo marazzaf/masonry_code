@@ -1,6 +1,8 @@
 import numpy as np
+from firedrake.petsc import PETSc
 import matplotlib.pyplot as plt
 import sys
+from graph import *
 
 def barycentric_coordinates_triangle(point, triangle):
     """
@@ -43,9 +45,13 @@ def stress_reconstruction(GM, stress_bnd, vec_forces):
     res = []
     G =  GM.graph
     for c1 in G.nodes:
-        if c1 >= 0:
+        if c1 >= 0: #Actual cell. Note boundary facet.
             stress = np.zeros((GM.d, GM.d))
-            #print(G.nodes[c1]['pos'])
+
+            #Create the Mesh with DMPlex
+            mesh = create_mesh(GM, c1)
+            sys.exit()
+            
             for c2 in G.neighbors(c1):
                 id_e = G[c1][c2]['id_edge']
                 if not G[c1][c2]['bnd']:
@@ -78,88 +84,59 @@ def stress_reconstruction(GM, stress_bnd, vec_forces):
 
     return res
 
+def create_mesh(GM, cell_index):
+    #Vertices of the mesh
+    vertices = GM.voronoi[cell_index]['vertices'] #Vertices from Voronoi cell
+    vertices.append(GM.voronoi[cell_index]['original']) #Adding vornoi center as last element
 
-def subdivide_from_point(vertices, point):
-    """
-    Subdivide a convex polygon into triangles using a given interior point.
-    
-    Parameters
-    ----------
-    vertices : (n, 2) ndarray
-        Ordered polygon vertices.
-    point : (2,) ndarray
-        Interior point used to fan out the triangles.
+    #Cells of the mesh
+    cells = []
+    for f in GM.voronoi[cell_index]['faces']:
+        cells.append(f['vertices'] + [len(vertices)-1])
 
-    Returns
-    -------
-    triangles : list of (3, 2) ndarray
-        List of triangle vertex arrays.
-    """
-    n = len(vertices)
-    triangles = []
+    # === Create DMPlex mesh with topology ===
+    plex = PETSc.DMPlex().createFromCellList(GM.d, cells, vertices, interpolate=True)   
 
-    for i in range(n):
-        v0 = vertices[i]
-        v1 = vertices[(i + 1) % n]
-        tri = np.array([point, v0, v1])
-        triangles.append(tri)
+    #Mark boundary facets
+    plex.markBoundaryFaces("bnd")
+    boundary_facets = plex.getStratumIS("bnd", GM.d-1).getIndices()
 
-    return triangles
+    return plex
 
-def compute_polygon_barycentre(vertices):
-    return np.mean(vertices, axis=0)
+#def subdivide_from_point(vertices, point):
+#    """
+#    Subdivide a convex polygon into triangles using a given interior point.
+#    
+#    Parameters
+#    ----------
+#    vertices : (n, 2) ndarray
+#        Ordered polygon vertices.
+#    point : (2,) ndarray
+#        Interior point used to fan out the triangles.
+#
+#    Returns
+#    -------
+#    triangles : list of (3, 2) ndarray
+#        List of triangle vertex arrays.
+#    """
+#    n = len(vertices)
+#    triangles = []
+#
+#    for i in range(n):
+#        v0 = vertices[i]
+#        v1 = vertices[(i + 1) % n]
+#        tri = np.array([point, v0, v1])
+#        triangles.append(tri)
+#
+#    return triangles
+#
+#def compute_polygon_barycentre(vertices):
+#    return np.mean(vertices, axis=0)
 
 def edge_normal(v0, v1):
     t = v1 - v0
     n = np.array([-t[1], t[0]])
     return n / np.linalg.norm(n)
-
-def build_triangle_system(tri, n_data, t_data, internal_constraints):
-    """
-    Assemble the 6x6 system for a single triangle:
-    - tri: (3,2) array of triangle vertices
-    - n_data: dict with normal vector at edge midpoints {index: normal}
-    - t_data: dict with known normal traction {index: value}
-    - internal_constraints: list of (midpoint, normal, traction) from neighbors
-    """
-    A = []
-    b = []
-
-    def row(sigma_n, t):
-        xm, ym = sigma_n['midpoint']
-        nx, ny = sigma_n['normal']
-        row1 = [nx, ny, 0, nx*xm, ny*xm, ny*ym]
-        row2 = [0, nx, ny, nx*xm, ny*xm, ny*ym]
-        return row1, row2, t[0], t[1]
-
-    # 1. Known boundary normal stress
-    edge_id = 0  # assume edge 0 is boundary (for now)
-    sigma_n = {'midpoint': 0.5 * (tri[edge_id] + tri[(edge_id+1)%3]),
-               'normal': n_data[edge_id]}
-    row1, row2, rhs1, rhs2 = row(sigma_n, t_data[edge_id])
-    A.extend([row1, row2])
-    b.extend([rhs1, rhs2])
-
-    # 2. Internal continuity constraints
-    for midpoint, normal, value in internal_constraints:
-        sigma_n = {'midpoint': midpoint, 'normal': normal}
-        row1, row2, rhs1, rhs2 = row(sigma_n, value)
-        A.append(row1)
-        b.append(rhs1)
-
-    # 3. Divergence-free constraint: div σ = 0 ⇒ ∂_x σ_{11} + ∂_y σ_{12} = 0
-    #                               ⇒ ∂_x σ_{12} + ∂_y σ_{22} = 0
-    # This imposes:
-    # a11 + a12 = 0
-    # a12 + a22 = 0
-    div1 = [0, 0, 0, 1, 1, 0]  # a11 + a12 = 0
-    div2 = [0, 0, 0, 0, 1, 1]  # a12 + a22 = 0
-    A.append(div1)
-    A.append(div2)
-    b.append(0)
-    b.append(0)
-
-    return np.array(A), np.array(b)
 
 def reconstruct_stress_polygon(vertices, tractions):
     n = len(vertices)
