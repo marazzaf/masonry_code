@@ -138,64 +138,30 @@ def edge_normal(v0, v1):
     n = np.array([-t[1], t[0]])
     return n / np.linalg.norm(n)
 
-def reconstruct_stress_polygon(vertices, tractions):
-    n = len(vertices)
-    center = compute_polygon_barycentre(vertices)
+def reconstruct_stress_polygon(mesh, bnd_condition):
+    #Mixed FEM space
+    V = VectorFunctionSpace(mesh, 'BDM', 1)
+    W = FunctionSpace(mesh, 'DG', 0)
+    Z = V * W
 
-    triangles = []
-    stress_fields = []
+    #Weak form
+    sigma,p = TrialFunctions(Z)
+    tau,q = TestFunctions(Z)
+    a = inner(div(sigma), div(tau)) * dx #LS for div equation
+    mat_p = as_matrix(((0, p), (-p, 0)))
+    mat_q = as_matrix(((0, q), (-q, 0)))
+    a += inner(sigma, mat_q) * dx #Constraints
+    a += inner(tau, mat_p) * dx #Constraints
 
-    for i in range(n):
-        v0 = vertices[i]
-        v1 = vertices[(i+1)%n]
-        tri = np.array([center, v0, v1])
-        triangles.append(tri)
+    #Linear form
+    L = Constant(0) * q * dx
 
-    # Precompute edge midpoints and normals
-    edge_data = []
-    for i in range(n):
-        p0 = vertices[i]
-        p1 = vertices[(i+1)%n]
-        mid = 0.5 * (p0 + p1)
-        normal = edge_normal(p0, p1)
-        edge_data.append({'midpoint': mid, 'normal': normal, 'traction': tractions[i]})
+    #Dirichlet BC
+    bcs = [] #Write that
 
-    # Build system for each triangle
-    for i, tri in enumerate(triangles):
-        # Only the boundary edge (edge 1)
-        boundary_edge = 1  # (v1, v2)
-        boundary_data = {
-            boundary_edge: edge_data[i]['normal']
-        }
-        traction_data = {
-            boundary_edge: edge_data[i]['traction']
-        }
+    #Solving
+    res = Function(Z)
+    solve(a == L, res, bcs=bcs)
+    stress,lag = split(res)
 
-        # Internal edge constraints (edge 0 and 2)
-        iL = (i - 1) % n
-        iR = (i + 1) % n
-
-        # Shared internal edge midpoints
-        mid0 = 0.5 * (tri[0] + tri[1])
-        mid2 = 0.5 * (tri[0] + tri[2])
-        n0 = edge_normal(tri[1], tri[0])  # pointing outward
-        n2 = edge_normal(tri[2], tri[0])  # pointing outward
-
-        # For continuity: use average (initial guess) of left/right tractions (zero here)
-        t0 = [0.0, 0.0]
-        t2 = [0.0, 0.0]
-
-        internal_constraints = [
-            (mid0, n0, t0),
-            (mid2, n2, t2)
-        ]
-
-        # Assemble and solve system
-        M, rhs = build_triangle_system(tri, boundary_data, traction_data, internal_constraints)
-        sol = np.linalg.solve(M, rhs)
-        b11, b12, b22, a11, a12, a22 = sol
-        B = np.array([[b11, b12], [b12, b22]])
-        A = np.array([[a11, a12], [a12, a22]])
-        stress_fields.append((A, B))
-
-    return triangles, stress_fields
+    return stress
