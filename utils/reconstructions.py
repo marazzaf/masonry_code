@@ -46,10 +46,9 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
     G =  GM.graph
     for c1 in G.nodes:
         if c1 >= 0: #Actual cell. Note boundary facet.
-            stress = np.zeros((GM.d, GM.d))
-
             #Create the Mesh with DMPlex
             plex = create_plex(GM, c1)
+            sys.exit()
 
             #Creating a list of markers and Dirichlet BC
             bnd_condition = [] #Value of normal stress on bnd
@@ -105,6 +104,13 @@ def create_plex(GM, cell_index):
 
     #Mark boundary facets
     plex.markBoundaryFaces("bnd")
+
+    #Test
+    print(GM.voronoi[cell_index]['faces'])
+    edge_start, edge_end = plex.getDepthStratum(1)
+    for edge in range(edge_start, edge_end):
+        cone = plex.getCone(edge)
+        print(f"Edge {edge} connects vertices {cone[:]}")
 
     return plex
 
