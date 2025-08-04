@@ -41,7 +41,7 @@ def barycentric_coordinates_triangle(point, triangle):
     return np.array([l1, l2, l3])
 
 
-def stress_reconstruction(GM, stress_bnd, vec_forces):
+def stress_reconstruction(GM, stress_bnd, normal_stresses):
     res = []
     G =  GM.graph
     for c1 in G.nodes:
@@ -49,19 +49,32 @@ def stress_reconstruction(GM, stress_bnd, vec_forces):
             stress = np.zeros((GM.d, GM.d))
 
             #Create the Mesh with DMPlex
-            mesh = create_mesh(GM, c1)
-            sys.exit()
+            plex = create_plex(GM, c1)
+
+            #Creating a list of markers and Dirichlet BC
+            bnd_condition = [] #Value of normal stress on bnd
+            bnd_marker = [] #Marker for the bnd
+
+            boundary_facets = plex.getStratumIS("bnd", GM.d-1).getIndices()
+            # Sort by order they appear
+            for idx, facet in enumerate(boundary_facets):
+                plex.setLabelValue('bnd', facet, idx) #Marking bnd
+
             
             for c2 in G.neighbors(c1):
-                id_e = G[c1][c2]['id_edge']
                 if not G[c1][c2]['bnd']:
+                    id_e = G[c1][c2]['id_edge']
+                    
+                    #Compute outward unit normal
                     n = G.nodes[c2]['pos'] - G.nodes[c1]['pos']
                     n /= np.linalg.norm(n) #unit normal
-                    t = G[c1][c2]['tangent']
-                    t *= np.dot(np.array([-n[1], n[0]]), t) #Correct direction of tangent
-                    force = vec_forces[id_e, 0] * n + vec_forces[id_e, 1] * t
-                    #force = np.zeros_like(force) #test
-                    #force = -n * G[c1][c2]['length'] #test
+
+                    #Compute BC
+                    bc = np.dot(normal_stresses[:, id_e], n)
+                    bnd_condition.append(bc)
+
+                    #Marker
+                    #Mark the correct bnd edge
                 else: #boundary facet
                     n = G[c1][c2]['normal']
                     id_e -= GM.Ne
@@ -69,22 +82,15 @@ def stress_reconstruction(GM, stress_bnd, vec_forces):
                     #force = np.zeros_like(force) #test
                     #force = -n * G[c1][c2]['length'] #test
 
-                #Test
-                print(c2,force)
-
-                #Adding component of stress
-                coeff = abs(np.dot(G[c1][c2]['bary'] - G.nodes[c1]['pos'], n))
-                stress += coeff * .5 * (np.outer(force, n) + np.outer(n, force))
+            #Solving the system for the stress reconstruction
+            stress = reconstruct_stress_polygon(plex, bnd_condition, bnd_marker)
 
             #Adding stress reconstruction to result list
-            stress /= G.nodes[c1]['area']
             res.append(stress)
-            print(stress)
-            sys.exit()
 
     return res
 
-def create_mesh(GM, cell_index):
+def create_plex(GM, cell_index):
     #Vertices of the mesh
     vertices = GM.voronoi[cell_index]['vertices'] #Vertices from Voronoi cell
     vertices.append(GM.voronoi[cell_index]['original']) #Adding vornoi center as last element
@@ -99,46 +105,17 @@ def create_mesh(GM, cell_index):
 
     #Mark boundary facets
     plex.markBoundaryFaces("bnd")
-    boundary_facets = plex.getStratumIS("bnd", GM.d-1).getIndices()
 
     return plex
-
-#def subdivide_from_point(vertices, point):
-#    """
-#    Subdivide a convex polygon into triangles using a given interior point.
-#    
-#    Parameters
-#    ----------
-#    vertices : (n, 2) ndarray
-#        Ordered polygon vertices.
-#    point : (2,) ndarray
-#        Interior point used to fan out the triangles.
-#
-#    Returns
-#    -------
-#    triangles : list of (3, 2) ndarray
-#        List of triangle vertex arrays.
-#    """
-#    n = len(vertices)
-#    triangles = []
-#
-#    for i in range(n):
-#        v0 = vertices[i]
-#        v1 = vertices[(i + 1) % n]
-#        tri = np.array([point, v0, v1])
-#        triangles.append(tri)
-#
-#    return triangles
-#
-#def compute_polygon_barycentre(vertices):
-#    return np.mean(vertices, axis=0)
 
 def edge_normal(v0, v1):
     t = v1 - v0
     n = np.array([-t[1], t[0]])
     return n / np.linalg.norm(n)
 
-def reconstruct_stress_polygon(mesh, bnd_condition):
+def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
+    #Create mesh
+    mesh = Mesh(plex)
     #Mixed FEM space
     V = VectorFunctionSpace(mesh, 'BDM', 1)
     W = FunctionSpace(mesh, 'DG', 0)
