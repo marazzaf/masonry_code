@@ -71,15 +71,17 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     sign = np.dot(n, G[c1][c2]['normal'])
                     t = G[c1][c2]['tangent']
                     normal_stress = stress_n * n * sign + stress_t * t
+                    #print(G[c1][c2]['bary'])
+                    #print(normal_stress)
                     bc = np.outer(normal_stress, n)
-                    
 
                 else: #boundary facet
                     n = G[c1][c2]['normal']
-                    id_e = GM.graph[c1][c2]['id_edge'] - GM.Ne #Id of the edge
+                    id_e = GM.graph[c1][c2]['id_edge'] #To Mark edge
+                    id_x = id_e - GM.Ne #To get bnd condition
 
                     #Compute BC
-                    bc = np.outer(stress_bnd[:, id_e], n)
+                    bc = np.outer(stress_bnd[:, id_x], n)
 
                 #Store BC
                 bnd_condition.append(bc)
@@ -92,7 +94,6 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                 
                 
                 #Mark the edge in the plex
-                #print(id_e)
                 plex.setLabelValue(dmcommon.FACE_SETS_LABEL, edge, id_e) #Marking bnd
                 bnd_marker.append(id_e)
             
@@ -151,16 +152,18 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Dirichlet BC
     bcs = []
     for mark,bc in zip(bnd_marker,bnd_condition):
+        #print(mark)
+        #print(bc)
         bc = DirichletBC(Z.sub(0), bc, mark)
         bcs.append(bc)
 
-    #Test
-    test = Function(Z, name='test')
-    for bc in bcs:
-        bc.apply(test)
-    file = VTKFile('test.pvd')
-    file.write(test.sub(0))
-    sys.exit()
+    ##Test
+    #test = Function(Z, name='test')
+    #for bc in bcs:
+    #    bc.apply(test)
+    #file = VTKFile('test.pvd')
+    #file.write(test.sub(0))
+    #sys.exit()
 
     #Solving
     res = Function(Z)
