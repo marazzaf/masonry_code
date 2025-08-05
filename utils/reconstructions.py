@@ -84,6 +84,9 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     bc = np.outer(stress_bnd[:, id_x], n)
 
                 #Store BC
+                #test
+                bc = -np.eye(2)
+                #bc = np.outer(np.dot(bc,n), n)
                 bnd_condition.append(bc)
 
                 #Find the edge in the plex
@@ -133,41 +136,59 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     mesh = Mesh(plex)
 
     #Mixed FEM space
-    V = VectorFunctionSpace(mesh, 'BDM', 1)
+    V = VectorFunctionSpace(mesh, 'RT', 1)
+    #V = TensorFunctionSpace(mesh, 'CG', 1)
     W = FunctionSpace(mesh, 'DG', 0)
     Z = V * W
 
     #Weak form
-    sigma,p = TrialFunctions(Z)
-    tau,q = TestFunctions(Z)
+    #sigma,p = TrialFunctions(Z)
+    #tau,q = TestFunctions(Z)
+    sigma = TrialFunction(V)
+    tau = TestFunction(V)
     a = inner(div(sigma), div(tau)) * dx #LS for div equation
-    mat_p = as_matrix(((0, p), (-p, 0)))
-    mat_q = as_matrix(((0, q), (-q, 0)))
-    a += inner(sigma, mat_q) * dx #Constraints
-    a += inner(tau, mat_p) * dx #Constraints
+    #mat_p = as_matrix(((0, p), (-p, 0)))
+    #mat_q = as_matrix(((0, q), (-q, 0)))
+    #a += inner(sigma, mat_q) * dx #Constraints
+    #a += inner(tau, mat_p) * dx #Constraints
 
     #Linear form
-    L = Constant(0) * q * dx
+    L = Constant(0) * tau[0,0] * dx
 
     #Dirichlet BC
     bcs = []
     for mark,bc in zip(bnd_marker,bnd_condition):
-        #print(mark)
-        #print(bc)
-        bc = DirichletBC(Z.sub(0), bc, mark)
+        #bc = DirichletBC(Z.sub(0), bc, mark)
+        bc = DirichletBC(V, bc, mark)
+        bc = DirichletBC(V, -Identity(2), mark) #test
         bcs.append(bc)
 
-    ##Test
-    #test = Function(Z, name='test')
-    #for bc in bcs:
-    #    bc.apply(test)
-    #file = VTKFile('test.pvd')
-    #file.write(test.sub(0))
-    #sys.exit()
+    #Test
+    test = Function(V, name='test')
+    for bc in bcs:
+        bc.apply(test.vector())
+    file = VTKFile('bc.pvd')
+    file.write(test)
+    sys.exit()
 
     #Solving
-    res = Function(Z)
-    solve(a == L, res, bcs=bcs)
-    stress,lag = split(res)
+    #res = Function(Z, name='stress')
+    res = Function(V, name='stress')
+    params = {'ksp_type': 'preonly', 'pc_type': 'lu', 'pc_factor_mat_solver_type' : 'mumps'}
+    solve(a == L, res, bcs=bcs, solver_parameters=params)
+    #stress,lag = split(res)
+
+    print(res.at((.25,0)))
+    print(res.at((0,.25)))
+    print(res.at((.5,.0)))
+    print(res.at((0,.5)))
+    #sys.exit()
+
+    file = VTKFile('test.pvd')
+    VV = TensorFunctionSpace(mesh, 'DG', 1)
+    aux = Function(VV, name='test')
+    aux.interpolate(res)
+    file.write(aux)
+    sys.exit()
 
     return stress
