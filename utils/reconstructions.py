@@ -4,6 +4,7 @@ from firedrake import *
 import matplotlib.pyplot as plt
 import sys
 from graph import *
+from firedrake.cython import dmcommon
 
 def barycentric_coordinates_triangle(point, triangle):
     """
@@ -50,8 +51,6 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
             #Create the Mesh with DMPlex
             plex = create_plex(GM, c1)
 
-            #print(plex.getDepthStratum(1)) #edges
-
             #Creating a list of markers and Dirichlet BC
             bnd_condition = [] #Value of normal stress on bnd
             bnd_marker = [] #Marker for the bnd
@@ -89,23 +88,8 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                 
                 #Mark the edge in the plex
                 #print(id_e)
-                plex.setLabelValue('bnd', edge, id_e) #Marking bnd
+                plex.setLabelValue(dmcommon.FACE_SETS_LABEL, edge, id_e) #Marking bnd
                 bnd_marker.append(id_e)
-                
-            #test
-            if plex.hasLabel('bnd'):
-                label = plex.getLabel('bnd')
-                # Get all values used in this label
-                values = label.getValueIS()
-                if values is not None:
-                    for value in values.getIndices():
-                        point_is = plex.getStratumIS('bnd', value)
-                        if point_is is not None:
-                            for point in point_is.getIndices():
-                                print(f"Facet {point} is marked with value {value}")
-                else:
-                    print("No values found in label.")
-            sys.exit()
             
             #Solving the system for the stress reconstruction
             stress = reconstruct_stress_polygon(plex, bnd_condition, bnd_marker)
@@ -141,7 +125,7 @@ def create_plex(GM, cell_index):
 def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Create mesh
     mesh = Mesh(plex)
-    
+
     #Mixed FEM space
     V = VectorFunctionSpace(mesh, 'BDM', 1)
     W = FunctionSpace(mesh, 'DG', 0)
@@ -162,7 +146,8 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Dirichlet BC
     bcs = []
     for mark,bc in zip(bnd_marker,bnd_condition):
-        bc = DirichletBC(Z.sub(0), Constant(bc), mark)
+        print(mark)
+        bc = DirichletBC(Z.sub(0), bc, mark)
         bcs.append(bc)
 
     #Solving
