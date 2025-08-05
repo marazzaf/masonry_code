@@ -119,19 +119,9 @@ class Energy:
     def solve(self, GM):
         #Solving linear problem
         sol = solvers.lp(self.E, self.G, self.h, self.A, self.b)
-        #print(dict(sol))
-        #sys.exit()
-
-        ##Test
-        #en = self.E.T * sol['x']
-        #print(en)
-        #print(sol['x'])
-        #sys.exit()
 
         #Checking solution converges
         assert sol['status'] == 'optimal'
-        #print(sol['z'])
-        #sys.exit()
 
         #Assembling forces at the internal edges
         d = GM.d
@@ -139,10 +129,6 @@ class Energy:
         aux1 = -np.array(sol['z'][:Ne]).reshape(Ne) #Normal components
         aux2 = sol['z'][Ne:]
         aux2 = np.array(aux2).reshape((Ne,d))
-        #print(aux2)
-        #sys.exit()
         aux2 = -aux2[:,0] + aux2[:,1] #Summing the components in each direction along t
-        aux = np.array([aux1, aux2]).T #Force at each edge in (n,t) coordinates
-        #print(aux)
-
+        aux = np.array([aux1, aux2]) #Force at each edge in (n,t) coordinates
         return aux

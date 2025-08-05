@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import sys
 from graph import *
 from firedrake.cython import dmcommon
+from firedrake.output import VTKFile
 
 def barycentric_coordinates_triangle(point, triangle):
     """
@@ -66,7 +67,11 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     n /= np.linalg.norm(n) #unit normal
 
                     #Compute BC
-                    bc = np.outer(normal_stresses[:, id_e], n)
+                    stress_n, stress_t = normal_stresses[:, id_e]
+                    sign = np.dot(n, G[c1][c2]['normal'])
+                    t = G[c1][c2]['tangent']
+                    normal_stress = stress_n * n * sign + stress_t * t
+                    bc = np.outer(normal_stress, n)
                     
 
                 else: #boundary facet
@@ -146,9 +151,16 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Dirichlet BC
     bcs = []
     for mark,bc in zip(bnd_marker,bnd_condition):
-        print(mark)
         bc = DirichletBC(Z.sub(0), bc, mark)
         bcs.append(bc)
+
+    #Test
+    test = Function(Z, name='test')
+    for bc in bcs:
+        bc.apply(test)
+    file = VTKFile('test.pvd')
+    file.write(test.sub(0))
+    sys.exit()
 
     #Solving
     res = Function(Z)

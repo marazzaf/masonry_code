@@ -27,7 +27,12 @@ for c1,c2 in GM.graph.edges:
         normal = GM.graph[c1][c2]['normal']
         stress_bnd[:,id_e] = -compression * normal
 
+#Assembling the system to minimize the energy
+E = Energy(GM, stress_bnd)
+
+#Computing the normal stresses
+f = E.solve(GM)
+
 #Stress reconstruction
-f = np.zeros((d, GM.Ne)) #For now
 stress = stress_reconstruction(GM, stress_bnd, f)
 sys.exit()
