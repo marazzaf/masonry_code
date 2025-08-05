@@ -76,7 +76,7 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
 
                 else: #boundary facet
                     n = G[c1][c2]['normal']
-                    id_e -= GM.Ne #Id of the edge
+                    id_e = GM.graph[c1][c2]['id_edge'] - GM.Ne #Id of the edge
 
                     #Compute BC
                     bc = np.outer(stress_bnd[:, id_e], n)
