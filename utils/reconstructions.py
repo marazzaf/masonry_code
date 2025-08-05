@@ -88,10 +88,24 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                 
                 
                 #Mark the edge in the plex
+                #print(id_e)
                 plex.setLabelValue('bnd', edge, id_e) #Marking bnd
                 bnd_marker.append(id_e)
                 
-            #sys.exit()
+            #test
+            if plex.hasLabel('bnd'):
+                label = plex.getLabel('bnd')
+                # Get all values used in this label
+                values = label.getValueIS()
+                if values is not None:
+                    for value in values.getIndices():
+                        point_is = plex.getStratumIS('bnd', value)
+                        if point_is is not None:
+                            for point in point_is.getIndices():
+                                print(f"Facet {point} is marked with value {value}")
+                else:
+                    print("No values found in label.")
+            sys.exit()
             
             #Solving the system for the stress reconstruction
             stress = reconstruct_stress_polygon(plex, bnd_condition, bnd_marker)
@@ -114,8 +128,8 @@ def create_plex(GM, cell_index):
     #Create DMPlex mesh with vertices and ells
     plex = PETSc.DMPlex().createFromCellList(GM.d, cells, vertices, interpolate=True)
 
-    #Mark boundary facets
-    plex.markBoundaryFaces("bnd")
+    ##Mark boundary facets
+    #plex.markBoundaryFaces("bnd")
 
     return plex
 
