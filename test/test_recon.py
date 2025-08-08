@@ -18,6 +18,10 @@ points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]])
 #Creating the graph
 GM = GranularMaterial(points, d, s)
 
+#plot
+GM.plot_voronoi()
+sys.exit()
+
 #Neumann condition on boundary edges
 compression = 1 #1e2 #compressive force
 stress_bnd = np.zeros((d, GM.Nbe))

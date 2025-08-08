@@ -15,17 +15,13 @@ N = 503 #20
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
 
-#Points inside a unit ball
-N = 5 #20
-theta = uniform.rvs(size=N) * np.pi * 2
-r = uniform.rvs(size=N)
-#points = np.array(r*[np.cos(theta), np.sin(theta)]).T
+points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]])
 
-##Grid
-##points = np.array([[.45, .45], [1.55, .45], [.45, 1.55], [1.55, 1.55], [.5, .5]])
-#aux = np.linspace(0, 1, N, endpoint=True)
-#from itertools import product
-#points = list(product(aux, aux))
+##Points inside a unit ball
+#N = 5 #20
+#theta = uniform.rvs(size=N) * np.pi * 2
+#r = uniform.rvs(size=N)
+##points = np.array(r*[np.cos(theta), np.sin(theta)]).T
 
 #Computing the Voronoi mesh
 from scipy.spatial import Voronoi, voronoi_plot_2d
@@ -33,10 +29,11 @@ vor = Voronoi(points)
 
 #plotting the Voronoi mesh
 fig = voronoi_plot_2d(vor)
-#plt.xlim(0,1)
-#plt.ylim(0,1)
+plt.xlim(0,1)
+plt.ylim(0,1)
 #plt.xlim(-5,5)
 #plt.ylim(-5,5)
+plt.savefig('test_domain.pdf')
 plt.show()
 
 sys.exit()
