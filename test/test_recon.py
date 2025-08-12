@@ -46,4 +46,6 @@ f = E.solve(GM)
 
 #Stress reconstruction
 stress = stress_reconstruction(GM, stress_bnd, f)
-sys.exit()
+file = VTKFile('test.pvd')
+for (i,s) in enumerate(stress):
+    file.write(s,idx=i)

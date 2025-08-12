@@ -58,9 +58,6 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
 
             #Looping through facets of the cell
             for c2 in G.neighbors(c1):
-            #for f in GM.voronoi[c1]['faces']:
-                #c2 = f['adjacent_cell']
-                print(c1,c2) #PB HERE!
                 if not G[c1][c2]['bnd']:
                     id_e = G[c1][c2]['id_edge'] #Id of the edge
                     
@@ -72,11 +69,8 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     stress_n, stress_t = normal_stresses[:, id_e]
                     sign = np.dot(n, G[c1][c2]['normal'])
                     t = G[c1][c2]['tangent']
-                    normal_stress = stress_n * n * sign - stress_t * t * np.dot(np.array([-n[1], n[0]]), t)
-                    #print(G[c1][c2]['bary'])
-                    #print(normal_stress)
-                    bc = np.outer(normal_stress, n)
-                    print(bc)
+                    normal_stress = stress_n * n * sign - stress_t * t * np.dot(np.array([-n[1], n[0]]), t) * sign
+                    bc = np.outer(normal_stress, n * sign)
 
                 else: #boundary facet
                     n = G[c1][c2]['normal']
@@ -85,9 +79,9 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
 
                     #Compute BC
                     bc = np.outer(stress_bnd[:, id_x], n)
-                    #print(bc)
 
                 #Store BC
+                #print(bc)
                 bnd_condition.append(bc)
 
                 #Find the edge in the plex
@@ -170,15 +164,13 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     res = Function(Z, name='stress')
     params = {'ksp_type': 'preonly', 'pc_type': 'lu', 'pc_factor_mat_solver_type' : 'mumps'}
     solve(a == L, res, bcs=bcs, solver_parameters=params)
-    stress,lag = split(res)
 
     #print(res.at((.25,0))[0])
     #print(res.at((0,.25))[0])
     #print(res.at((.5,0))[0])
     #print(res.at((0,.5))[0])
 
-    file = VTKFile('test.pvd')
-    file.write(res.sub(0))
+    
     #sys.exit()
 
-    return stress
+    return res.sub(0)
