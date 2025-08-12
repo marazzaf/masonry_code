@@ -115,6 +115,9 @@ def create_plex(GM, cell_index):
     for f in GM.voronoi[cell_index]['faces']:
         cells.append(f['vertices'] + [len(vertices)-1])
 
+    #Test
+    assert len(vertices)-1 == len(cells)
+    
     #Create DMPlex mesh with vertices and ells
     plex = PETSc.DMPlex().createFromCellList(GM.d, cells, vertices, interpolate=True)
 
@@ -127,6 +130,10 @@ def create_plex(GM, cell_index):
 def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Create mesh
     mesh = Mesh(plex)
+
+    ##Test
+    #triplot(mesh)
+    #plt.show()
 
     #Mixed FEM space
     V = VectorFunctionSpace(mesh, 'RT', 1)
@@ -152,25 +159,9 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
         #bc = DirichletBC(V, bc, mark)
         bcs.append(bc)
 
-    ##Test
-    #test = Function(V, name='test')
-    #for bc in bcs:
-    #    bc.apply(test.vector())
-    #file = VTKFile('bc.pvd')
-    #file.write(test)
-    #sys.exit()
-
     #Solving
     res = Function(Z, name='stress')
     params = {'ksp_type': 'preonly', 'pc_type': 'lu', 'pc_factor_mat_solver_type' : 'mumps'}
     solve(a == L, res, bcs=bcs, solver_parameters=params)
-
-    #print(res.at((.25,0))[0])
-    #print(res.at((0,.25))[0])
-    #print(res.at((.5,0))[0])
-    #print(res.at((0,.5))[0])
-
-    
-    #sys.exit()
 
     return res.sub(0)
