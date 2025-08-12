@@ -57,8 +57,9 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
             bnd_marker = [] #Marker for the bnd
 
             #Looping through facets of the cell
-            for f in GM.voronoi[c1]['faces']:
-                c2 = f['adjacent_cell']
+            for c2 in G.neighbors(c1):
+            #for f in GM.voronoi[c1]['faces']:
+                #c2 = f['adjacent_cell']
                 print(c1,c2) #PB HERE!
                 if not G[c1][c2]['bnd']:
                     id_e = G[c1][c2]['id_edge'] #Id of the edge
@@ -71,7 +72,7 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     stress_n, stress_t = normal_stresses[:, id_e]
                     sign = np.dot(n, G[c1][c2]['normal'])
                     t = G[c1][c2]['tangent']
-                    normal_stress = stress_n * n * sign + stress_t * t
+                    normal_stress = stress_n * n * sign - stress_t * t * np.dot(np.array([-n[1], n[0]]), t)
                     #print(G[c1][c2]['bary'])
                     #print(normal_stress)
                     bc = np.outer(normal_stress, n)
@@ -91,7 +92,9 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
 
                 #Find the edge in the plex
                 cell_start, cell_end = plex.getDepthStratum(2)
-                v1,v2 = list(np.array(f['vertices']) + cell_end)
+                #HOW DO I DO HERE?
+                verts = GM.graph.nodes[c1]['face_dict'][c2]
+                v1,v2 = list(np.array(verts) + cell_end)
                 edge = plex.getJoin([v1, v2])
                 #print(v1,v2,edge)
                 
@@ -126,10 +129,6 @@ def create_plex(GM, cell_index):
 
     return plex
 
-#def edge_normal(v0, v1):
-#    t = v1 - v0
-#    n = np.array([-t[1], t[0]])
-#    return n / np.linalg.norm(n)
 
 def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Create mesh
@@ -180,6 +179,6 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
 
     file = VTKFile('test.pvd')
     file.write(res.sub(0))
-    sys.exit()
+    #sys.exit()
 
     return stress

@@ -35,9 +35,13 @@ class GranularMaterial:
 
     def fill_cells(self):
         for cid, cell in enumerate(self.voronoi):
+            face_dict = dict()
+            for i in cell['faces']:
+                face_dict[i['adjacent_cell']] = i['vertices']
             self.graph.add_node(cid, #id of the node
                                pos=np.array(cell["original"]),        #input point coordinates
-                               area=cell["volume"])               #polygon area
+                                area=cell["volume"],               #polygon area
+                                face_dict=face_dict) #To store vertices of adjacent facets
             
         self.Nc = len(self.graph.nodes) #Number of cells
 
@@ -76,10 +80,13 @@ class GranularMaterial:
                     else:
                         c1p = -self.Nc + c1
                         G.add_edge(c1p, c2, bary=barycentre, length=length, normal=normal, bnd=True) #Adding boundary edge
+                        #verts = G.nodes[c2]['face_dict'][c1]
+                        G.nodes[c2]['face_dict'][c1p] = G.nodes[c2]['face_dict'].pop(c1) #Modify dict in cell 2
                 else: #internal edge
                     #Computing unit normal
                     normal = G.nodes[c2]['pos'] - G.nodes[c1]['pos'] #normal from - towards +
                     unit_normal = normal / np.linalg.norm(normal)
+                    unit_tangent = np.array([-unit_normal[1], unit_normal[0]])
                     G.add_edge(c1, c2, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i, bnd=False) #add interal edge
                     i += 1
                     self.Ne += 1 #Increment number of internal edges

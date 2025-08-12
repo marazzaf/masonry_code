@@ -20,8 +20,12 @@ GM = GranularMaterial(points, d, s)
 
 #plot
 #GM.plot_voronoi()
+#print(GM.voronoi[0]['faces'])
+#print(GM.voronoi[1]['faces'])
+#print(GM.graph.nodes[1]['face_dict'])
+#print(GM.voronoi[2]['faces'])
+#print(GM.voronoi[3]['faces'])
 #GM.plot_graph()
-#sys.exit()
 
 #Neumann condition on boundary edges
 compression = 1 #1e2 #compressive force
