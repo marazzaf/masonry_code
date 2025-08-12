@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 np.random.seed(seed=136985)
 
 #Material parameter for friction
-s = 1
+s = 2
 
 #Getting the points
 d = 2 #Space dimension
@@ -27,23 +27,27 @@ GM = GranularMaterial(points, d, s)
 
 #Neumann condition on boundary edges
 compression = 1 #1e2 #compressive force
-eps = 1
-S = -compression * np.array([[1, eps], [eps,1]])
+eps = .1
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
     if GM.graph[c1][c2]['bnd']:
         id_e = GM.graph[c1][c2]['id_edge'] - GM.Ne
         normal = GM.graph[c1][c2]['normal']
-        stress_bnd[:,id_e] = np.dot(S, normal)
+        bary = GM.graph[c1][c2]['bary']
+        if bary[1] > .9 and (bary[0] - .5) < .2:
+            stress_bnd[:,id_e] = -normal
+        else:
+            stress_bnd[:,id_e] = -eps * normal
 
 #Assembling the system to minimize the energy
 E = Energy(GM, stress_bnd)
 
 #Computing the normal stresses
 f = E.solve(GM)
+#sys.exit()
 
 #Stress reconstruction
 stress = stress_reconstruction(GM, stress_bnd, f)
-file = VTKFile('test.pvd')
+file = VTKFile('sol.pvd')
 for (i,s) in enumerate(stress):
     file.write(s,idx=i)
