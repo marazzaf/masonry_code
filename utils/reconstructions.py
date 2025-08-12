@@ -59,6 +59,7 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
             #Looping through facets of the cell
             for f in GM.voronoi[c1]['faces']:
                 c2 = f['adjacent_cell']
+                print(c1,c2) #PB HERE!
                 if not G[c1][c2]['bnd']:
                     id_e = G[c1][c2]['id_edge'] #Id of the edge
                     
@@ -74,6 +75,7 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     #print(G[c1][c2]['bary'])
                     #print(normal_stress)
                     bc = np.outer(normal_stress, n)
+                    print(bc)
 
                 else: #boundary facet
                     n = G[c1][c2]['normal']
@@ -82,11 +84,9 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
 
                     #Compute BC
                     bc = np.outer(stress_bnd[:, id_x], n)
+                    #print(bc)
 
                 #Store BC
-                #test
-                bc = -np.eye(2)
-                #bc = np.outer(np.dot(bc,n), n)
                 bnd_condition.append(bc)
 
                 #Find the edge in the plex
@@ -137,20 +137,17 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
 
     #Mixed FEM space
     V = VectorFunctionSpace(mesh, 'RT', 1)
-    #V = TensorFunctionSpace(mesh, 'CG', 1)
     W = FunctionSpace(mesh, 'DG', 0)
     Z = V * W
 
     #Weak form
-    #sigma,p = TrialFunctions(Z)
-    #tau,q = TestFunctions(Z)
-    sigma = TrialFunction(V)
-    tau = TestFunction(V)
+    sigma,p = TrialFunctions(Z)
+    tau,q = TestFunctions(Z)
     a = inner(div(sigma), div(tau)) * dx #LS for div equation
-    #mat_p = as_matrix(((0, p), (-p, 0)))
-    #mat_q = as_matrix(((0, q), (-q, 0)))
-    #a += inner(sigma, mat_q) * dx #Constraints
-    #a += inner(tau, mat_p) * dx #Constraints
+    mat_p = as_matrix(((0, p), (-p, 0)))
+    mat_q = as_matrix(((0, q), (-q, 0)))
+    a += inner(sigma, mat_q) * dx #Constraints
+    a += inner(tau, mat_p) * dx #Constraints
 
     #Linear form
     L = Constant(0) * tau[0,0] * dx
@@ -158,37 +155,31 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Dirichlet BC
     bcs = []
     for mark,bc in zip(bnd_marker,bnd_condition):
-        #bc = DirichletBC(Z.sub(0), bc, mark)
-        bc = DirichletBC(V, bc, mark)
-        bc = DirichletBC(V, -Identity(2), mark) #test
+        bc = DirichletBC(Z.sub(0), bc, mark)
+        #bc = DirichletBC(V, bc, mark)
         bcs.append(bc)
 
-    #Test
-    test = Function(V, name='test')
-    for bc in bcs:
-        bc.apply(test.vector())
-    file = VTKFile('bc.pvd')
-    file.write(test)
-    sys.exit()
-
-    #Solving
-    #res = Function(Z, name='stress')
-    res = Function(V, name='stress')
-    params = {'ksp_type': 'preonly', 'pc_type': 'lu', 'pc_factor_mat_solver_type' : 'mumps'}
-    solve(a == L, res, bcs=bcs, solver_parameters=params)
-    #stress,lag = split(res)
-
-    print(res.at((.25,0)))
-    print(res.at((0,.25)))
-    print(res.at((.5,.0)))
-    print(res.at((0,.5)))
+    ##Test
+    #test = Function(V, name='test')
+    #for bc in bcs:
+    #    bc.apply(test.vector())
+    #file = VTKFile('bc.pvd')
+    #file.write(test)
     #sys.exit()
 
+    #Solving
+    res = Function(Z, name='stress')
+    params = {'ksp_type': 'preonly', 'pc_type': 'lu', 'pc_factor_mat_solver_type' : 'mumps'}
+    solve(a == L, res, bcs=bcs, solver_parameters=params)
+    stress,lag = split(res)
+
+    #print(res.at((.25,0))[0])
+    #print(res.at((0,.25))[0])
+    #print(res.at((.5,0))[0])
+    #print(res.at((0,.5))[0])
+
     file = VTKFile('test.pvd')
-    VV = TensorFunctionSpace(mesh, 'DG', 1)
-    aux = Function(VV, name='test')
-    aux.interpolate(res)
-    file.write(aux)
+    file.write(res.sub(0))
     sys.exit()
 
     return stress

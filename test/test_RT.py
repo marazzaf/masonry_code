@@ -17,16 +17,16 @@ Z = V * W
 #Testing interpolation
 stress = Function(V, name='stress')
 x = SpatialCoordinate(mesh)
-aux = as_vector((-x[1], x[0]))
-BC = .5 * (outer(x,aux) + outer(aux,x))
+#aux = as_vector((-x[1], x[0]))
+BC = Constant(((-1, -1), (-1, -1)))
 stress.interpolate(BC)
-VV = VectorFunctionSpace(mesh, 'DG', 0)
-aux = Function(VV)
-aux.interpolate(div(stress))
+#VV = VectorFunctionSpace(mesh, 'DG', 0)
+#aux = Function(VV)
+#aux.interpolate(div(stress))
 
-#Output
-file = VTKFile('test_3.pvd')
-file.write(aux)
+##Output
+#file = VTKFile('test_3.pvd')
+#file.write(aux)
 
 #Output
 file = VTKFile('test.pvd')
