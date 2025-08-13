@@ -164,4 +164,23 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     params = {'ksp_type': 'preonly', 'pc_type': 'lu', 'pc_factor_mat_solver_type' : 'mumps'}
     solve(a == L, res, bcs=bcs, solver_parameters=params)
 
-    return res.sub(0)
+    #DG reconstruction
+    WW = TensorFunctionSpace(mesh, 'DG', 1)
+    proj = Function(WW, name='stress')
+    proj.interpolate(res.sub(0))
+
+    ##Test
+    #scalar_space = FunctionSpace(mesh, "DG", 1)
+    #sigma_norm = Function(scalar_space, name="sigma_norm")
+    #sigma_norm.project(sqrt(inner(proj, proj)))  # inner gives Frobenius inner product
+    #
+    ## Plot with matplotlib
+    #fig, ax = plt.subplots()
+    #tric = tripcolor(sigma_norm, axes=ax, cmap="viridis")  # Firedrake's tripcolor wrapper
+    #plt.colorbar(tric, ax=ax, label=r"$\|\sigma\|_F$")
+    #ax.set_aspect("equal")
+    #ax.set_title("Frobenius norm of σ")
+    #plt.show()
+
+    return proj
+#    return res.sub(0)

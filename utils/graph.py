@@ -52,7 +52,6 @@ class GranularMaterial:
         for cid_i, cell_i in enumerate(self.voronoi):
             for face in cell_i["faces"]:
                 cid_j = face["adjacent_cell"]
-                #print(cid_i,cid_j)
                 if G.has_edge(cid_i, cid_j):     # skip duplicates
                     continue
 
@@ -119,7 +118,8 @@ class GranularMaterial:
                         i += 1
                         break
                     except ValueError:
-                        continue
+                        print('Pb with barycentric coordinate computation!')
+                        sys.exit()
                     
                 
         
