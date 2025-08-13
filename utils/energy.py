@@ -123,6 +123,9 @@ class Energy:
         #Checking solution converges
         assert sol['status'] == 'optimal'
 
+        #print(sol['z'])
+        #sys.exit()
+
         #Assembling forces at the internal edges
         d = GM.d
         Ne = GM.Ne
