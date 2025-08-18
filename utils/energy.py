@@ -95,17 +95,6 @@ class Energy:
         b = np.zeros(d)
         self.b = matrix(b, tc='d')
 
-        ##Test
-        ##Blocking disp of first cell
-        #self.A = spmatrix(1, [0, 1], [0, 1], size=(d,d*Nc+Ne))
-        
-        ##Block disp of boundary cells on bottom left and right
-        #I = []
-        #J = []
-        #x = np.ones(2*len(self.bnd))
-        #for c in self.bnd:
-        #    #Continue
-
         #lhs equality constraint
         A = np.arange(1, d*Nc+1)
         A %= 2
@@ -113,7 +102,6 @@ class Energy:
         A = np.array((A, B))
         B = np.zeros((d,Ne))
         A = np.concatenate((A, B), axis=1)
-        #print(A)
         self.A = matrix(A, tc='d')
 
     def solve(self, GM):
@@ -132,6 +120,6 @@ class Energy:
         aux1 = -np.array(sol['z'][:Ne]).reshape(Ne) #Normal components
         aux2 = sol['z'][Ne:]
         aux2 = np.array(aux2).reshape((Ne,d))
-        aux2 = -aux2[:,0] + aux2[:,1] #Summing the components in each direction along t
+        aux2 = aux2[:,0] - aux2[:,1] #Summing the components in each direction along t
         aux = np.array([aux1, aux2]) #Force at each edge in (n,t) coordinates
         return aux

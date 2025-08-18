@@ -64,13 +64,14 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     #Compute outward unit normal
                     n = G.nodes[c2]['pos'] - G.nodes[c1]['pos']
                     n /= np.linalg.norm(n) #unit normal
+                    normal = G[c1][c2]['normal']
 
                     #Compute BC
                     stress_n, stress_t = normal_stresses[:, id_e]
-                    sign = np.dot(n, G[c1][c2]['normal'])
+                    sign = np.dot(n, normal)
                     t = G[c1][c2]['tangent']
-                    normal_stress = stress_n * n * sign - stress_t * t * np.dot(np.array([-n[1], n[0]]), t) * sign
-                    bc = np.outer(normal_stress, n * sign)
+                    normal_stress = sign * (stress_n * normal + stress_t * t)
+                    bc = np.outer(normal_stress, n)
 
                 else: #boundary facet
                     n = G[c1][c2]['normal']
@@ -89,9 +90,7 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                 #HOW DO I DO HERE?
                 verts = GM.graph.nodes[c1]['face_dict'][c2]
                 v1,v2 = list(np.array(verts) + cell_end)
-                edge = plex.getJoin([v1, v2])
-                #print(v1,v2,edge)
-                
+                edge = plex.getJoin([v1, v2])                
                 
                 #Mark the edge in the plex
                 plex.setLabelValue(dmcommon.FACE_SETS_LABEL, edge, id_e) #Marking bnd
@@ -131,10 +130,6 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Create mesh
     mesh = Mesh(plex)
 
-    ##Test
-    #triplot(mesh)
-    #plt.show()
-
     #Mixed FEM space
     V = VectorFunctionSpace(mesh, 'RT', 1)
     W = FunctionSpace(mesh, 'DG', 0)
@@ -156,7 +151,6 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     bcs = []
     for mark,bc in zip(bnd_marker,bnd_condition):
         bc = DirichletBC(Z.sub(0), bc, mark)
-        #bc = DirichletBC(V, bc, mark)
         bcs.append(bc)
 
     #Solving
@@ -168,19 +162,6 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     WW = TensorFunctionSpace(mesh, 'DG', 1)
     proj = Function(WW, name='stress')
     proj.interpolate(res.sub(0))
-
-    ##Test
-    #scalar_space = FunctionSpace(mesh, "DG", 1)
-    #sigma_norm = Function(scalar_space, name="sigma_norm")
-    #sigma_norm.project(sqrt(inner(proj, proj)))  # inner gives Frobenius inner product
-    #
-    ## Plot with matplotlib
-    #fig, ax = plt.subplots()
-    #tric = tripcolor(sigma_norm, axes=ax, cmap="viridis")  # Firedrake's tripcolor wrapper
-    #plt.colorbar(tric, ax=ax, label=r"$\|\sigma\|_F$")
-    #ax.set_aspect("equal")
-    #ax.set_title("Frobenius norm of σ")
-    #plt.show()
 
     return proj
 #    return res.sub(0)

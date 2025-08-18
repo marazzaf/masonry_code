@@ -60,27 +60,22 @@ class GranularMaterial:
                 verts_i = np.asarray(cell_i["vertices"])[vidx]  # shape (2,2)
                 v1, v2 = verts_i 
                 barycentre = .5 * (v1 + v2)
-                #Compute unit tangent
                 length = np.linalg.norm(v1 - v2)
-                unit_tangent = (v1 - v2) / length
 
                 c1,c2 = sorted((cid_i, cid_j)) #c1 < c2 always
                 if c1 < 0: #Boundary edge
                     self.bnd.add(c2) #Mark cell as being on the boundary
-
                     #Computing unit normal
-                    normal = np.array([-unit_tangent[1], unit_tangent[0]])
-                    opposite_direction = G.nodes[c2]['pos'] - barycentre
-                    opposite_direction /= np.linalg.norm(opposite_direction)
-                    normal *= -np.dot(normal, opposite_direction)
+                    normal = G.nodes[c2]['pos'] - barycentre
+                    unit_normal = -normal / np.linalg.norm(normal)
                     
                     if not G.has_node(c1): #Test to see if cell c1 already exits!
-                        G.add_edge(c1, c2, bary=barycentre, length=length, normal=normal, bnd=True) #Adding boundary edge
+                        G.add_edge(c1, c2, bary=barycentre, length=length, normal=unit_normal, bnd=True) #Adding boundary edge
                     else:
                         c1p = -self.Nc + c1
-                        G.add_edge(c1p, c2, bary=barycentre, length=length, normal=normal, bnd=True) #Adding boundary edge
-                        #verts = G.nodes[c2]['face_dict'][c1]
+                        G.add_edge(c1p, c2, bary=barycentre, length=length, normal=unit_normal, bnd=True) #Adding boundary edge
                         G.nodes[c2]['face_dict'][c1p] = G.nodes[c2]['face_dict'].pop(c1) #Modify dict in cell 2
+                        
                 else: #internal edge
                     #Computing unit normal
                     normal = G.nodes[c2]['pos'] - G.nodes[c1]['pos'] #normal from - towards +
