@@ -87,7 +87,6 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
 
                 #Find the edge in the plex
                 cell_start, cell_end = plex.getDepthStratum(2)
-                #HOW DO I DO HERE?
                 verts = GM.graph.nodes[c1]['face_dict'][c2]
                 v1,v2 = list(np.array(verts) + cell_end)
                 edge = plex.getJoin([v1, v2])                
@@ -150,10 +149,10 @@ def reconstruct_stress_polygon(plex, bnd_condition, bnd_marker):
     #Dirichlet BC
     bcs = []
     for mark,bc in zip(bnd_marker,bnd_condition):
-        bc = DirichletBC(Z.sub(0), bc, mark)
-        bcs.append(bc)
+        BC = DirichletBC(Z.sub(0), bc, mark)
+        bcs.append(BC)
 
-    #Solving
+     #Solving
     res = Function(Z, name='stress')
     params = {'ksp_type': 'preonly', 'pc_type': 'lu', 'pc_factor_mat_solver_type' : 'mumps'}
     solve(a == L, res, bcs=bcs, solver_parameters=params)
