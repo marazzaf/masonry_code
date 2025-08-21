@@ -41,6 +41,8 @@ def barycentric_coordinates_triangle(point, triangle):
     l2 = area2(P, C, A) / area_total
     l3 = area2(P, A, B) / area_total
 
+    assert max(np.absolute(np.array([l1,l2,l3]))) < 5
+
     return np.array([l1, l2, l3])
 
 
@@ -71,6 +73,7 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     sign = np.dot(n, normal)
                     t = G[c1][c2]['tangent']
                     normal_stress = sign * (stress_n * normal + stress_t * t)
+                    #normal_stress = sign * stress_n * normal #test
                     bc = np.outer(normal_stress, n)
 
                 else: #boundary facet

@@ -95,26 +95,34 @@ class GranularMaterial:
             if G[c1][c2]['bnd']: #c1 is the 'false' cell
                 triangle_id = [c2]
                 triangle_coord = [G.nodes[c2]['pos']] #Will be used to compute barycentric coordinates
+                #test
+                G[c1][c2]['bary_coord'] = np.array([1])
+                G[c1][c2]['bary_points'] = [c2]
+                G[c1][c2]['id_edge'] = self.Ne + i #Used for stress boundary conditions
+                i += 1
+                continue
+            
                 for c3 in G.neighbors(c2):
                     #Looping in neighbors of boundary cell
                     if c3 >= 0:
-                    #if len(triangle_id) < 3 and c3 >= 0:
                         triangle_id.append(c3)
                         triangle_coord.append(G.nodes[c3]['pos'])
-                    #elif len(triangle_id) >= 3:
-                    #    break
                 #Compute barycentric coordinates in the triangle
                 for sub_tri_id,sub_tri_coord in zip(combinations(triangle_id,3), combinations(triangle_coord,3)):
                     try:
                         bary_coord = barycentric_coordinates_triangle(point, sub_tri_coord)
+                        #print(bary_coord)
                         G[c1][c2]['bary_coord'] = bary_coord
                         G[c1][c2]['bary_points'] = sub_tri_id
                         G[c1][c2]['id_edge'] = self.Ne + i #Used for stress boundary conditions
                         i += 1
                         break
                     except ValueError:
-                        print('Pb with barycentric coordinate computation!')
-                        sys.exit()
+                        continue
+                    except AssertionError:
+                        continue
+                    #    print('Pb with barycentric coordinate computation!')
+                    #    sys.exit()
                     
                 
         

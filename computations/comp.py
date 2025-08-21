@@ -27,7 +27,7 @@ GM = GranularMaterial(points, d, s)
 
 #Neumann condition on boundary edges
 compression = 1 #1e2 #compressive force
-eps = .1
+eps = 1 #.1
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
     if GM.graph[c1][c2]['bnd']:
@@ -58,12 +58,12 @@ for (i,s) in enumerate(stress):
     mesh = s.function_space().mesh()
     scalar_space = FunctionSpace(mesh, "DG", 1)
     sigma_norm = Function(scalar_space, name="sigma_norm")
-    sigma_norm.project(sqrt(inner(s, s)))  # inner gives Frobenius inner product
-    #sigma_norm.interpolate(s[0,0])
+    #sigma_norm.project(sqrt(inner(s, s)))  # inner gives Frobenius inner product
+    sigma_norm.interpolate(s[0,0])
 
     tric = tripcolor(sigma_norm, axes=ax)#, cmap="jet")  # Firedrake's tripcolor wrapper
-#plt.colorbar(tric, ax=ax, label=r"$\sigma_{11}$")
-plt.colorbar(tric, ax=ax, label=r"$\|\sigma\|_F$")
+plt.colorbar(tric, ax=ax, label=r"$\sigma_{11}$")
+#plt.colorbar(tric, ax=ax, label=r"$\|\sigma\|_F$")
 ax.set_aspect("equal")
 #ax.set_title(r"Frobenius norm of $\sigma$")
 #plt.savefig('sigma_12.png')
