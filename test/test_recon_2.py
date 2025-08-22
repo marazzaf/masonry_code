@@ -7,16 +7,16 @@ import matplotlib.pyplot as plt
 from reconstructions import stress_reconstruction
 
 #Material parameter for friction
-s = 1
+s = 10
 
 #Space dimension
 d = 2 
 
 #Getting the points
-#points = np.array([[1/6,5/6], [1/3,2/3], [5/6,2/3], [2/3,5/6], [1/6,1/3], [1/3,1/6], [2/3,1/3], [5/6,1/6]]) #Interesting test
-points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [5/6,2/3], [2/3,5/6]])
+#points = np.array([[1/6,5/6], [1/3,2/3], [5/6,2/3], [2/3,5/6], [1/6,1/3], [1/3,1/6], [2/3,1/3], [5/6,1/6]]) #Not working
+#points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [5/6,2/3], [2/3,5/6]]) #Interesting test
 #points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]]) #First verification test
-#points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verification test
+points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verification test
 
 ##Test
 #nx, ny = 6, 6
@@ -31,19 +31,18 @@ points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [5/6,2/3], [2/3,5/6]])
 #    for yy in yc:
 #        points.append([xx, yy])
 #points = np.array(points)
-##print(points)
 
 #Creating the graph
 GM = GranularMaterial(points, d, s)
 
 ##plot
-GM.plot_voronoi()
+#GM.plot_voronoi()
 #GM.plot_graph()
 #sys.exit()
 
 #Neumann condition on boundary edges
 compression = 1 #compressive force
-eps = 0 #.5
+eps = 0 #1 #.5
 S = -compression * np.array([[1, eps], [eps,1]])
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
@@ -57,6 +56,8 @@ E = Energy(GM, stress_bnd)
 
 #Computing the normal stresses
 f = E.solve(GM)
+
+print(f)
 
 #Stress reconstruction
 stress = stress_reconstruction(GM, stress_bnd, f)

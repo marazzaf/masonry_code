@@ -95,12 +95,12 @@ class GranularMaterial:
             if G[c1][c2]['bnd']: #c1 is the 'false' cell
                 triangle_id = [c2]
                 triangle_coord = [G.nodes[c2]['pos']] #Will be used to compute barycentric coordinates
-                ##test
-                #G[c1][c2]['bary_coord'] = np.array([1])
-                #G[c1][c2]['bary_points'] = [c2]
-                #G[c1][c2]['id_edge'] = self.Ne + i #Used for stress boundary conditions
-                #i += 1
-                #continue
+                #test
+                G[c1][c2]['bary_coord'] = np.array([1])
+                G[c1][c2]['bary_points'] = [c2]
+                G[c1][c2]['id_edge'] = self.Ne + i #Used for stress boundary conditions
+                i += 1
+                continue
             
                 for c3 in G.neighbors(c2):
                     #Looping in neighbors of boundary cell
