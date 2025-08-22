@@ -63,17 +63,18 @@ class Energy:
             if not G[c1][c2]['bnd']:
                 id_edge = G[c1][c2]['id_edge']
                 t = G[c1][c2]['tangent']
-                #First inequality. Direction of -t
-                GG2[2*id_edge,2*c1] = -t[0] #x component
-                GG2[2*id_edge,2*c1+1] = -t[1] #y component
-                GG2[2*id_edge,2*c2] = t[0] #x component
-                GG2[2*id_edge,2*c2+1] = t[1] #y component
+                cc1,cc2 = sorted((c1,c2)) #c1 < c2
+                #First inequality. Direction of t
+                GG2[2*id_edge,2*cc1] = -t[0] #x component
+                GG2[2*id_edge,2*cc1+1] = -t[1] #y component
+                GG2[2*id_edge,2*cc2] = t[0] #x component
+                GG2[2*id_edge,2*cc2+1] = t[1] #y component
                 GG2[2*id_edge, d*Nc+id_edge] = -1 #for abs
-                #Second inequality. Direction of t
-                GG2[2*id_edge+1,2*c1] = t[0] #x component
-                GG2[2*id_edge+1,2*c1+1] = t[1] #y component
-                GG2[2*id_edge+1,2*c2] = -t[0] #x component
-                GG2[2*id_edge+1,2*c2+1] = -t[1] #y component
+                #Second inequality. Direction of -t
+                GG2[2*id_edge+1,2*cc1] = t[0] #x component
+                GG2[2*id_edge+1,2*cc1+1] = t[1] #y component
+                GG2[2*id_edge+1,2*cc2] = -t[0] #x component
+                GG2[2*id_edge+1,2*cc2+1] = -t[1] #y component
                 GG2[2*id_edge+1, d*Nc+id_edge] = -1 #for abs
 
         #Assembling constraints
