@@ -73,7 +73,8 @@ def stress_reconstruction(GM, stress_bnd, normal_stresses):
                     sign = np.dot(n, normal)
                     tangent = G[c1][c2]['tangent']
                     normal_stress = sign * (stress_n * normal + stress_t * tangent)
-                    normal_stress /= G[c1][c2]['length'] #test
+                    #normal_stress = sign * stress_n * normal #+ stress_t * tangent) #test
+                    normal_stress /= G[c1][c2]['length']
                     bc = np.outer(normal_stress, n)
 
                 else: #boundary facet

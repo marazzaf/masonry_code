@@ -42,7 +42,7 @@ GM = GranularMaterial(points, d, s)
 
 #Neumann condition on boundary edges
 compression = 1 #compressive force
-eps = 0 #1 #.5
+eps = 1 #1 #.5
 S = -compression * np.array([[1, eps], [eps,1]])
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
@@ -56,7 +56,6 @@ E = Energy(GM, stress_bnd)
 
 #Computing the normal stresses
 f = E.solve(GM)
-
 print(f)
 
 #Stress reconstruction

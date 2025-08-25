@@ -27,14 +27,14 @@ GM = GranularMaterial(points, d, s)
 
 #Neumann condition on boundary edges
 compression = 1 #1e2 #compressive force
-eps = .1 #1 #.1
+eps = 1 #1 #.1
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
     if GM.graph[c1][c2]['bnd']:
         id_e = GM.graph[c1][c2]['id_edge'] - GM.Ne
         normal = GM.graph[c1][c2]['normal']
         bary = GM.graph[c1][c2]['bary']
-        if bary[1] > .9 and (bary[0] - .5) < .05:
+        if bary[1] > .9 and (bary[0] - .5) < .1:
             stress_bnd[:,id_e] = -compression * normal
         else:
             stress_bnd[:,id_e] = -eps * normal
@@ -44,7 +44,7 @@ E = Energy(GM, stress_bnd)
 
 #Computing the normal stresses
 f = E.solve(GM)
-#sys.exit()
+#print(f)
 
 #Stress reconstruction
 stress = stress_reconstruction(GM, stress_bnd, f)
@@ -58,13 +58,13 @@ for (i,s) in enumerate(stress):
     mesh = s.function_space().mesh()
     scalar_space = FunctionSpace(mesh, "DG", 1)
     sigma_norm = Function(scalar_space, name="sigma_norm")
-    sigma_norm.project(sqrt(inner(s, s)))  # inner gives Frobenius inner product
-    #sigma_norm.interpolate(s[1,1])
+    #sigma_norm.project(sqrt(inner(s, s)))  # inner gives Frobenius inner product
+    sigma_norm.interpolate(s[1,0])
 
     tric = tripcolor(sigma_norm, axes=ax)#, cmap="jet")  # Firedrake's tripcolor wrapper
-#plt.colorbar(tric, ax=ax, label=r"$\sigma_{22}$")
-plt.colorbar(tric, ax=ax, label=r"$\|\sigma\|_F$")
+plt.colorbar(tric, ax=ax, label=r"$\sigma_{21}$")
+#plt.colorbar(tric, ax=ax, label=r"$\|\sigma\|_F$")
 ax.set_aspect("equal")
 #ax.set_title(r"Frobenius norm of $\sigma$")
-plt.savefig('non_hom_norm.png')
+plt.savefig('hom_21.png')
 plt.show()
