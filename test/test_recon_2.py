@@ -16,7 +16,9 @@ d = 2
 #points = np.array([[1/6,5/6], [1/3,2/3], [5/6,2/3], [2/3,5/6], [1/6,1/3], [1/3,1/6], [2/3,1/3], [5/6,1/6]]) #Not working
 #points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [5/6,2/3], [2/3,5/6]]) #Interesting test
 #points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]]) #First verification test
-points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verification test
+#points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verification test
+#points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4], [1/2,1/2]]) #Third verification test
+points = np.array([[1/6,1/6], [1/6,5/6], [5/6,1/6], [5/6,5/6], [1/2,1/2]])
 
 ##Test
 #nx, ny = 6, 6
@@ -36,13 +38,13 @@ points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verifica
 GM = GranularMaterial(points, d, s)
 
 ##plot
-#GM.plot_voronoi()
+GM.plot_voronoi()
 #GM.plot_graph()
 #sys.exit()
 
 #Neumann condition on boundary edges
 compression = 1 #compressive force
-eps = 1 #1 #.5
+eps = 0 #1 #.5
 S = -compression * np.array([[1, eps], [eps,1]])
 stress_bnd = np.zeros((d, GM.Nbe))
 for c1,c2 in GM.graph.edges:
@@ -74,11 +76,10 @@ for (i,s) in enumerate(stress):
     scalar_space = FunctionSpace(mesh, "DG", 1)
     sigma_norm = Function(scalar_space, name="sigma_norm")
     #sigma_norm.project(sqrt(inner(s, s)))  # inner gives Frobenius inner product
-    sigma_norm.interpolate(s[0,0])
+    sigma_norm.interpolate(s[1,1])
 
     tric = tripcolor(sigma_norm, axes=ax, cmap="jet")  # Firedrake's tripcolor wrapper
-plt.colorbar(tric, ax=ax, label=r"$\sigma_{11}$") #"$\|\sigma\|_F$"
+plt.colorbar(tric, ax=ax, label=r"$\sigma_{22}$") #"$\|\sigma\|_F$"
 ax.set_aspect("equal")
-#ax.set_title("Frobenius norm of σ")
 #plt.savefig('sigma_12.png')
 plt.show()
