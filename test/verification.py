@@ -60,8 +60,10 @@ for c1,c2 in GM.graph.edges:
         f = length * np.dot(sigma, normal)
         f_n = -np.dot(f,normal)
         f_t = np.dot(f,tangent)
-        f_tp = max(f_t, 0)
-        f_tn = max(-f_t,0)
+        #f_tp = max(f_t, 0)
+        #f_tn = max(-f_t,0)
+        f_tp = s * length/2 #test
+        f_tn = s * length/2 #test
         z[id_e] = f_n
         z[GM.Ne+2*id_e] = f_tp
         z[GM.Ne+2*id_e+1] = f_tn
@@ -71,20 +73,18 @@ for c1,c2 in GM.graph.edges:
 #Checking energy
 zz = matrix(z)
 print(zz)
-#sys.exit()
-#print(E.h.T.size)
-en = -E.h.T * zz
 
 #Checking fenchel-duality
-test1 = (E.G.T * zz)[:GM.Ne]
-test2 = E.E[:GM.Ne]
+test = E.G.T * zz + E.E
+aux1 = test[:GM.d * GM.Nc] #normal components ok
+print(aux1)
+
+#test1 = (E.G.T * zz)[GM.d * GM.Nc:]
+#test2 = E.E[GM.d * GM.Nc:]
 #for t1,t2 in zip(test1,test2):
 #    print(t1,t2)
 #sys.exit()
-test = E.G.T * zz + E.E
-aux1 = test[:GM.Ne]
-#print(aux1)
-aux2 = test[GM.Ne:]
+
+aux2 = test[GM.d * GM.Nc:] #tangent components
 print(aux2)
-sys.exit()
 
