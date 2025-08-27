@@ -15,24 +15,24 @@ d = 2
 #Getting the points
 #points = np.array([[1/6,5/6], [1/3,2/3], [5/6,2/3], [2/3,5/6], [1/6,1/3], [1/3,1/6], [2/3,1/3], [5/6,1/6]]) #Not working
 #points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [5/6,2/3], [2/3,5/6]]) #Interesting test
-#points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]]) #First verification test
-points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verification test
+points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]]) #First verification test
+#points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verification test
 #points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4], [1/2,1/2]])
 #points = np.array([[1/6,1/6], [1/6,5/6], [5/6,1/6], [5/6,5/6], [1/2,1/2]])
 
-##Test
-#nx, ny = 6, 6
-#x = np.linspace(0.0, 1.0, nx+1)
-#y = np.linspace(0.0, 1.0, ny+1)
-#X, Y = np.meshgrid(x, y, indexing='xy')          # (ny+1, nx+1)
-#nodes = np.stack((X, Y), axis=-1)                # (ny+1, nx+1, 2)
-#xc = 0.5 * (x[:-1] + x[1:])
-#yc = 0.5 * (y[:-1] + y[1:])
-#points = []
-#for xx in xc:
-#    for yy in yc:
-#        points.append([xx, yy])
-#points = np.array(points)
+#Test
+nx, ny = 6, 6
+x = np.linspace(0.0, 1.0, nx+1)
+y = np.linspace(0.0, 1.0, ny+1)
+X, Y = np.meshgrid(x, y, indexing='xy')          # (ny+1, nx+1)
+nodes = np.stack((X, Y), axis=-1)                # (ny+1, nx+1, 2)
+xc = 0.5 * (x[:-1] + x[1:])
+yc = 0.5 * (y[:-1] + y[1:])
+points = []
+for xx in xc:
+    for yy in yc:
+        points.append([xx, yy])
+points = np.array(points)
 
 #Creating the graph
 GM = GranularMaterial(points, d, s)

@@ -66,8 +66,11 @@ class GranularMaterial:
                 if c1 < 0: #Boundary edge
                     self.bnd.add(c2) #Mark cell as being on the boundary
                     #Computing unit normal
-                    normal = G.nodes[c2]['pos'] - barycentre
-                    unit_normal = -normal / np.linalg.norm(normal)
+                    tangent = v1 - v2
+                    n = barycentre - G.nodes[c2]['pos']
+                    normal = np.array([-tangent[1], tangent[0]])
+                    unit_normal = normal / np.linalg.norm(normal)
+                    unit_normal *= np.sign(np.dot(unit_normal, n)) #outwards unit normal
                     
                     if not G.has_node(c1): #Test to see if cell c1 already exits!
                         G.add_edge(c1, c2, bary=barycentre, length=length, normal=unit_normal, bnd=True) #Adding boundary edge

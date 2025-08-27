@@ -22,8 +22,10 @@ class Energy:
             if G[c1][c2]['bnd']:
                 id_e = G[c1][c2]['id_edge'] - GM.Ne
                 for id_c,coord in zip(G[c1][c2]['bary_points'], G[c1][c2]['bary_coord']):
+                    print(coord, G[c1][c2]['length'], stress_bnd[:,id_e])
                     c[d*id_c] -= coord * G[c1][c2]['length'] * stress_bnd[0,id_e] #x component
                     c[d*id_c+1] -= coord * G[c1][c2]['length'] * stress_bnd[1,id_e] #y component
+
 
         #Energy for Tresca friction law
         s = GM.s_T #Tresca friction parameter
