@@ -16,9 +16,9 @@ d = 2
 #points = np.array([[1/6,5/6], [1/3,2/3], [5/6,2/3], [2/3,5/6], [1/6,1/3], [1/3,1/6], [2/3,1/3], [5/6,1/6]]) #Not working
 #points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [5/6,2/3], [2/3,5/6]]) #Interesting test
 #points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]]) #First verification test
-#points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verification test
-#points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4], [1/2,1/2]]) #Third verification test
-points = np.array([[1/6,1/6], [1/6,5/6], [5/6,1/6], [5/6,5/6], [1/2,1/2]])
+points = np.array([[1/2,1/6], [1/2,5/6], [1/6,1/2], [5/6,1/2]]) #Second verification test
+#points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4], [1/2,1/2]])
+#points = np.array([[1/6,1/6], [1/6,5/6], [5/6,1/6], [5/6,5/6], [1/2,1/2]])
 
 ##Test
 #nx, ny = 6, 6
