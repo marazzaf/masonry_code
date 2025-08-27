@@ -22,7 +22,6 @@ class Energy:
             if G[c1][c2]['bnd']:
                 id_e = G[c1][c2]['id_edge'] - GM.Ne
                 for id_c,coord in zip(G[c1][c2]['bary_points'], G[c1][c2]['bary_coord']):
-                    print(coord, G[c1][c2]['length'], stress_bnd[:,id_e])
                     c[d*id_c] -= coord * G[c1][c2]['length'] * stress_bnd[0,id_e] #x component
                     c[d*id_c+1] -= coord * G[c1][c2]['length'] * stress_bnd[1,id_e] #y component
 
@@ -52,6 +51,7 @@ class Energy:
             if not G[c1][c2]['bnd']:
                 id_edge = G[c1][c2]['id_edge']
                 n = G[c1][c2]['normal']
+                #print(id_edge, c1, c2)
                 cc1,cc2 = sorted((c1,c2)) #c1 < c2
                 GG1[id_edge,2*cc1] = n[0] #x component
                 GG1[id_edge,2*cc1+1] = n[1] #y component

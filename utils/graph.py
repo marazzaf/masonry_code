@@ -84,6 +84,7 @@ class GranularMaterial:
                     normal = G.nodes[c2]['pos'] - G.nodes[c1]['pos'] #normal from - towards + (from c1 to c2)
                     unit_normal = normal / np.linalg.norm(normal)
                     unit_tangent = np.array([-unit_normal[1], unit_normal[0]])
+                    #print(i, barycentre, unit_normal)
                     G.add_edge(c1, c2, normal=unit_normal, tangent=unit_tangent, bary=barycentre, length=length, id_edge=i, bnd=False) #add interal edge
                     i += 1
                     self.Ne += 1 #Increment number of internal edges
