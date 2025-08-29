@@ -17,11 +17,6 @@ N = 60 #20
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
 
-#Test
-#points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4], [1/2,1/2]]) #Third verification test
-points = np.array([[1/6,1/6], [1/6,5/6], [5/6,1/6], [5/6,5/6], [1/2,1/2]])
-#points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]]) #First verification test
-
 #Creating the graph
 GM = GranularMaterial(points, d, s)
 
@@ -59,33 +54,32 @@ for c1,c2 in GM.graph.edges:
         f = length * np.dot(sigma, normal)
         f_n = -np.dot(f,normal)
         f_t = np.dot(f,tangent)
-        f_tp = max(f_t, 0)
-        f_tn = max(-f_t,0)
+        #f_tp = max(f_t, 0)
+        #f_tn = max(-f_t,0)
+        f_tp = s * length/2 #test
+        f_tn = s * length/2 #test
         z[id_e] = f_n
         z[GM.Ne+2*id_e] = f_tp
         z[GM.Ne+2*id_e+1] = f_tn
         assert f_n > 0
         assert abs(f_t) < 1e-15
 
+
 #Checking energy
 zz = matrix(z)
-#print(zz.size)
-#print(E.h.T.size)
-en = -E.h.T * zz
-#print(en)
+#print(zz)
 
 #Checking fenchel-duality
-test1 = (E.G.T * zz)[:GM.Ne]
-test2 = E.E[:GM.Ne]
-for t1,t2 in zip(test1,test2):
-    print(t1,t2)
-sys.exit()
-#print(E.E.size)
-#print(E.G.size)
 test = E.G.T * zz + E.E
-aux1 = test[:GM.Ne]
-print(aux1.size)
-aux2 = test[GM.Ne:]
+aux1 = test[:GM.d * GM.Nc] #normal components ok
+#print(aux1)
+
+#test1 = (E.G.T * zz)[GM.d * GM.Nc:]
+#test2 = E.E[GM.d * GM.Nc:]
+#for t1,t2 in zip(test1,test2):
+#    print(t1,t2)
+#sys.exit()
+
+aux2 = test[GM.d * GM.Nc:] #tangent components
 print(aux2)
-sys.exit()
 
