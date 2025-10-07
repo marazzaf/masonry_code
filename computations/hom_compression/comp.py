@@ -1,8 +1,9 @@
 import numpy as np
 import sys
-sys.path.append('../utils/')
+sys.path.append('../../utils/')
 from graph import *
 from energy import *
+from reconstructions import *
 import matplotlib.pyplot as plt
 
 #Fixing seed
