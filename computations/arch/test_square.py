@@ -233,28 +233,20 @@ def clip_voronoi_edges_to_geometry(
             b = vor.vertices[v2]
             seg = LineString([a, b])
         else:
-            # Infinite ridge: build a long segment and let clipping truncate it
-            # Direction = outward normal to the segment between the two generator points
+            # --- FIXED: make a half-ray, not a full line ---
             t = vor.points[p2] - vor.points[p1]
-            if np.allclose(t, 0):
+            nrm = np.linalg.norm(t)
+            if nrm == 0:
                 continue
-            t = t / np.linalg.norm(t)
+            t = t / nrm
             n = np.array([-t[1], t[0]])  # normal
-
-            # Use the finite vertex if we have one; otherwise use the midpoint
-            if v1 >= 0:
-                base = vor.vertices[v1]
-            elif v2 >= 0:
-                base = vor.vertices[v2]
-            else:
-                # degenerate: no Voronoi vertex; fall back to midpoint of the sites
-                base = (vor.points[p1] + vor.points[p2]) / 2.0
-
+            base = (vor.vertices[v1] if v1 >= 0 else
+                    (vor.vertices[v2] if v2 >= 0 else (vor.points[p1] + vor.points[p2]) / 2.0))
             midpoint = (vor.points[p1] + vor.points[p2]) / 2.0
             direction = np.sign(np.dot(midpoint - center, n)) * n
             direction /= np.linalg.norm(direction)
-
-            a = base - direction * radius
+            # half-ray outward only:
+            a = base
             b = base + direction * radius
             seg = LineString([a, b])
 
