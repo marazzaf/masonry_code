@@ -13,15 +13,18 @@ s = 10
 
 #Getting the points
 d = 2 #Space dimension
-N = 20
+N = 10
 pts = np.random.uniform(size=d*N)
 points = pts.reshape((N,d))
+
+#test
+points = np.array([[1/4,1/4], [1/4,3/4], [3/4,1/4], [3/4,3/4]])
 
 #Creating the graph
 GM = GranularMaterial(points, d, s)
 
 #Plotting points
-#GM.plot_graph()
+GM.plot_graph()
 GM.plot_voronoi()
 sys.exit()
 
