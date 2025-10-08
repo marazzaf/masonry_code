@@ -4,6 +4,8 @@ import sys
 sys.path.append('../../utils/')
 from energy import *
 from graph_aux import *
+from dataclasses import dataclass
+from collections import defaultdict
 import matplotlib.pyplot as plt
 from shapely.geometry import Polygon, box, GeometryCollection, MultiPolygon, Point, LineString
 from shapely.ops import unary_union, linemerge
@@ -169,6 +171,13 @@ def _areal_union(g):
     # other geometry types: no areal part
     return None
 
+@dataclass(frozen=True)
+class ClippedEdge:
+    """A single clipped Voronoi edge piece."""
+    segment: LineString          # the clipped line segment (Shapely)
+    cells: tuple[int, int]       # (i, j) site indices that own the ridge
+    ridge_index: int             # index into vor.ridge_points / vor.ridge_vertices
+
 def clip_voronoi_edges_to_geometry(
     geom,
     vor: Voronoi,
@@ -223,17 +232,18 @@ def clip_voronoi_edges_to_geometry(
 
     center = vor.points.mean(axis=0)
 
-    segments = []
+    segments: list[ClippedEdge] = []
+    by_cell_edges: dict[int, list[int]] = defaultdict(list)
 
     # Iterate Voronoi ridges (pairs of sites) and their vertex indices
-    for (p1, p2), (v1, v2) in zip(vor.ridge_points, vor.ridge_vertices):
+    #for (p1, p2), (v1, v2) in zip(vor.ridge_points, vor.ridge_vertices):
+    for ridge_idx, ((p1, p2), (v1, v2)) in enumerate(zip(vor.ridge_points, vor.ridge_vertices)):
         if v1 >= 0 and v2 >= 0:
             # Finite ridge
             a = vor.vertices[v1]
             b = vor.vertices[v2]
             seg = LineString([a, b])
         else:
-            # --- FIXED: make a half-ray, not a full line ---
             t = vor.points[p2] - vor.points[p1]
             nrm = np.linalg.norm(t)
             if nrm == 0:
@@ -250,45 +260,48 @@ def clip_voronoi_edges_to_geometry(
             b = base + direction * radius
             seg = LineString([a, b])
 
-        if seg.length <= eps:
-            continue
+            pieces = []
+            if inter.geom_type == "LineString":
+                pieces = [inter]
+            elif inter.geom_type == "MultiLineString":
+                pieces = [s for s in inter.geoms if s.length > eps]
+            # ignore point/tiny intersections
 
-        clipped = seg.intersection(clip_target)
-        if clipped.is_empty:
-            continue
+            i, j = int(p1), int(p2)
+            if j < i:  # ensure sorted ownership tuple
+                i, j = j, i
+            owners = (i, j)
 
-        # Keep resulting linework
-        if clipped.geom_type == "LineString":
-            if clipped.length > eps:
-                segments.append(clipped)
-        elif clipped.geom_type == "MultiLineString":
-            for s in clipped.geoms:
-                if s.length > eps:
-                    segments.append(s)
-        # (Points may occur at tangencies; ignore.)
+            for seg in pieces:
+                if seg.length <= eps:
+                    continue
+                if drop_boundary_touches and isinstance(clip_target, (Polygon, MultiPolygon)):
+                    mid = seg.interpolate(0.5, normalized=True)
+                    if not clip_target.contains(mid):
+                        continue
 
-    if merge_collinear and segments:
-        merged = linemerge(unary_union(segments))
-        return merged  # MultiLineString or LineString
+                edge = ClippedEdge(segment=seg, cells=owners, ridge_index=ridge_idx)
+                idx = len(segments)
+                segments.append(edge)
+                by_cell_edges[i].append(idx)
+                by_cell_edges[j].append(idx)
 
-    return segments
+        return segments, dict(by_cell_edges)
 
 
 # -------------------------- demo usage --------------------------
 # Clip the Voronoi graph to the areal part (arch)
-clipped_edges = clip_voronoi_edges_to_geometry(geometry, voro, merge_collinear=False)
+clipped_edges, cells = clip_voronoi_edges_to_geometry(geometry, voro, merge_collinear=False)
+
+print(clipped_edges)
 
 # Plot
 fig, ax = plt.subplots(figsize=(6, 4.5))
 # arch boundary
 ax.plot(*unit_square.exterior.xy, lw=1.4)
 # clipped voronoi edges
-for s in clipped_edges:
-    x, y = s.xy
-    ax.plot(x, y, lw=0.6)
-# original sites
-ax.plot(pts[:, 0], pts[:, 1], ".", ms=2)
-ax.set_aspect("equal", "box")
-ax.set_title("Voronoi edges clipped to a Shapely geometry")
-plt.tight_layout()
-plt.show()
+for e in clipped_edges:
+    x, y = e.segment.xy
+    ax.plot(x, y, lw=0.7, color='red')
+ax.scatter(pts[:,0], pts[:,1], s=6)
+ax.set_aspect("equal","box"); plt.tight_layout(); plt.show()
