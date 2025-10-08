@@ -5,8 +5,8 @@ sys.path.append('../../utils/')
 from energy import *
 from graph_aux import *
 import matplotlib.pyplot as plt
-from shapely.geometry import Polygon, box, GeometryCollection, MultiPolygon, Point
-from shapely.ops import unary_union
+from shapely.geometry import Polygon, box, GeometryCollection, MultiPolygon, Point, LineString
+from shapely.ops import unary_union, linemerge
 from shapely.prepared import prep
 
 #Fixing seed
@@ -138,64 +138,165 @@ def equidistant_points_in_geometry(
 #Putting the points within the geometry
 pts = equidistant_points_in_geometry(geometry, spacing=0.08, lattice="hex", rotate_degrees=15)
 
-#plot points
-fig, ax = plt.subplots()
-ax.plot(*unit_square.exterior.xy, lw=1.5)
-for r in unit_square.interiors:
-    ax.plot(*zip(*r.coords[:]), lw=1.0)
-ax.scatter(pts[:,0], pts[:,1], s=6)
-ax.set_aspect("equal","box"); plt.show()
+##plot points
+#fig, ax = plt.subplots()
+#ax.plot(*unit_square.exterior.xy, lw=1.5)
+#for r in unit_square.interiors:
+#    ax.plot(*zip(*r.coords[:]), lw=1.0)
+#ax.scatter(pts[:,0], pts[:,1], s=6)
+#ax.set_aspect("equal","box")
+#plt.show()
 
-sys.exit()
+#Creating Voronoi mesh
+from scipy.spatial import Voronoi,voronoi_plot_2d
+voro = Voronoi(pts)
+##Plot
+#fig = voronoi_plot_2d(voro)
+#plt.show()
 
-#Creating the graph
-GM = GranularMaterial(points, d, s)
+#Clipping Voronoi mesh to geometry
+def _areal_union(g):
+    """Union of polygonal pieces inside any Shapely geometry."""
+    if g.is_empty:
+        return None
+    if isinstance(g, (Polygon, MultiPolygon)):
+        return g
+    if isinstance(g, GeometryCollection):
+        polys = [h for h in g.geoms if isinstance(h, (Polygon, MultiPolygon))]
+        if polys:
+            return unary_union(polys)
+        return None
+    # other geometry types: no areal part
+    return None
 
-#Plotting points
-GM.plot_graph()
-GM.plot_voronoi()
-sys.exit()
+def clip_voronoi_edges_to_geometry(
+    geom,
+    vor: Voronoi,
+    radius: float | None = None,
+    use_areal_components: bool = True,
+    merge_collinear: bool = False,
+    eps: float = 1e-9,
+):
+    """
+    Build Voronoi edges (as LineStrings) from a scipy.spatial.Voronoi and clip them to 'geom'.
 
-#Neumann condition on boundary edges
-compression = 1 #1e2 #compressive force
-eps = 1 #1 #.1
-stress_bnd = np.zeros((d, GM.Nbe))
-for c1,c2 in GM.graph.edges:
-    if GM.graph[c1][c2]['bnd']:
-        id_e = GM.graph[c1][c2]['id_edge'] - GM.Ne
-        normal = GM.graph[c1][c2]['normal']
-        bary = GM.graph[c1][c2]['bary']
-        if bary[1] > .9 and (bary[0] - .5) < .1:
-            stress_bnd[:,id_e] = -compression * normal
+    Args
+    ----
+    geom : shapely geometry (GeometryCollection/Polygon/etc.)
+        The geometry to clip against. If it contains polygons, those form the clip region.
+        Otherwise the geometry's envelope (expanded) is used to truncate infinite rays.
+    vor : scipy.spatial.Voronoi
+        2D Voronoi diagram (from your seed points).
+    radius : float, optional
+        Distance to extend infinite ridges before clipping. Defaults to ~4x diagram span.
+    use_areal_components : bool, default True
+        If True, clip to the union of polygonal parts in 'geom'. If no areal parts exist,
+        falls back to an expanded envelope. If False, clip to 'geom' directly (useful if
+        you want to keep segments that lie along lines in 'geom').
+    merge_collinear : bool, default False
+        If True, returns merged lines (linemerge over all clipped segments).
+    eps : float
+        Length tolerance; segments shorter than this are discarded.
+
+    Returns
+    -------
+    list[LineString]  (or a MultiLineString if merge_collinear=True)
+    """
+    if vor.points.shape[1] != 2:
+        raise ValueError("This function expects a 2D Voronoi diagram.")
+
+    # ---- choose a clipping area to intersect against ----
+    area = _areal_union(geom) if use_areal_components else None
+
+    # a generous cap for extending rays / bounding box
+    if radius is None:
+        span = vor.points.ptp(axis=0).max()  # max range across x or y
+        radius = max(span, 1.0) * 4.0
+
+    # If we have areal geometry, clip to it; otherwise use an expanded envelope.
+    if area is not None and not area.is_empty and area.area > 0:
+        clip_target = area
+        minx, miny, maxx, maxy = area.bounds
+    else:
+        minx, miny, maxx, maxy = geom.envelope.bounds if not geom.is_empty else (0, 0, 1, 1)
+        clip_target = box(minx - radius, miny - radius, maxx + radius, maxy + radius)
+
+    center = vor.points.mean(axis=0)
+
+    segments = []
+
+    # Iterate Voronoi ridges (pairs of sites) and their vertex indices
+    for (p1, p2), (v1, v2) in zip(vor.ridge_points, vor.ridge_vertices):
+        if v1 >= 0 and v2 >= 0:
+            # Finite ridge
+            a = vor.vertices[v1]
+            b = vor.vertices[v2]
+            seg = LineString([a, b])
         else:
-            stress_bnd[:,id_e] = -eps * normal
+            # Infinite ridge: build a long segment and let clipping truncate it
+            # Direction = outward normal to the segment between the two generator points
+            t = vor.points[p2] - vor.points[p1]
+            if np.allclose(t, 0):
+                continue
+            t = t / np.linalg.norm(t)
+            n = np.array([-t[1], t[0]])  # normal
 
-#Assembling the system to minimize the energy
-E = Energy(GM, stress_bnd)
+            # Use the finite vertex if we have one; otherwise use the midpoint
+            if v1 >= 0:
+                base = vor.vertices[v1]
+            elif v2 >= 0:
+                base = vor.vertices[v2]
+            else:
+                # degenerate: no Voronoi vertex; fall back to midpoint of the sites
+                base = (vor.points[p1] + vor.points[p2]) / 2.0
 
-#Computing the normal stresses
-f = E.solve(GM)
-#print(f)
+            midpoint = (vor.points[p1] + vor.points[p2]) / 2.0
+            direction = np.sign(np.dot(midpoint - center, n)) * n
+            direction /= np.linalg.norm(direction)
 
-#Stress reconstruction
-stress = stress_reconstruction(GM, stress_bnd, f)
-file = VTKFile('sol.pvd')
-# Plot with matplotlib
-fig, ax = plt.subplots()
-for (i,s) in enumerate(stress):
-    file.write(s,idx=i)
+            a = base - direction * radius
+            b = base + direction * radius
+            seg = LineString([a, b])
 
-    #Test
-    mesh = s.function_space().mesh()
-    scalar_space = FunctionSpace(mesh, "DG", 1)
-    sigma_norm = Function(scalar_space, name="sigma_norm")
-    #sigma_norm.project(sqrt(inner(s, s)))  # inner gives Frobenius inner product
-    sigma_norm.interpolate(s[1,0])
+        if seg.length <= eps:
+            continue
 
-    tric = tripcolor(sigma_norm, axes=ax)#, cmap="jet")  # Firedrake's tripcolor wrapper
-plt.colorbar(tric, ax=ax, label=r"$\sigma_{21}$")
-#plt.colorbar(tric, ax=ax, label=r"$\|\sigma\|_F$")
-ax.set_aspect("equal")
-#ax.set_title(r"Frobenius norm of $\sigma$")
-plt.savefig('hom_21.png')
+        clipped = seg.intersection(clip_target)
+        if clipped.is_empty:
+            continue
+
+        # Keep resulting linework
+        if clipped.geom_type == "LineString":
+            if clipped.length > eps:
+                segments.append(clipped)
+        elif clipped.geom_type == "MultiLineString":
+            for s in clipped.geoms:
+                if s.length > eps:
+                    segments.append(s)
+        # (Points may occur at tangencies; ignore.)
+
+    if merge_collinear and segments:
+        merged = linemerge(unary_union(segments))
+        return merged  # MultiLineString or LineString
+
+    return segments
+
+
+# -------------------------- demo usage --------------------------
+# Clip the Voronoi graph to the areal part (arch)
+clipped_edges = clip_voronoi_edges_to_geometry(geometry, voro, merge_collinear=False)
+
+# Plot
+fig, ax = plt.subplots(figsize=(6, 4.5))
+# arch boundary
+ax.plot(*unit_square.exterior.xy, lw=1.4)
+# clipped voronoi edges
+for s in clipped_edges:
+    x, y = s.xy
+    ax.plot(x, y, lw=0.6)
+# original sites
+ax.plot(pts[:, 0], pts[:, 1], ".", ms=2)
+ax.set_aspect("equal", "box")
+ax.set_title("Voronoi edges clipped to a Shapely geometry")
+plt.tight_layout()
 plt.show()
