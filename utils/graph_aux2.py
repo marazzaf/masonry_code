@@ -30,26 +30,30 @@ class GranularMaterial:
         self.fill_boundary_cells()
 
     def fill_inner_cells(self):
+        self.Nc = 0 #Number of cells
         for cid, point in enumerate(self.points):
-            region = self.voronoi.regions[cid]
+            pt_region = self.voronoi.point_region[cid]
+            region = self.voronoi.regions[pt_region]
             if -1 not in region: #Closed cell (inner cell)
-                vertices_id = self.voronoi.regions[cid]
+                vertices_id = self.voronoi.regions[pt_region]
                 vertices = self.voronoi.vertices[vertices_id]
                 vertices = np.column_stack([vertices[:, 0], vertices[:, 1], np.zeros_like(vertices_id)])
                 self.mesh.add_face(vertices)
+                self.Nc += 1
 
-        #self.Nc = len(self.graph.nodes) #Number of cells
 
     def fill_boundary_cells(self):
         for cid, point in enumerate(self.points):
-            region = self.voronoi.regions[cid]
-            print(cid,region)
+            pt_region = self.voronoi.point_region[cid]
+            region = self.voronoi.regions[pt_region]
             if -1 in region:
                 self.bnd.add(cid)
-                vertices = clip_voronoi_cell_vertices(self.voronoi, cid, self.geometry)[0]
+                print(pt_region,region)
+                vertices = clip_voronoi_cell_vertices(self.voronoi, pt_region, self.geometry)[0]
                 vertices = np.column_stack([vertices[:, 0], vertices[:, 1], np.zeros_like(vertices[:,0])])
-                #print(vertices)
+                print(vertices)
                 self.mesh.add_face(vertices)
+                self.Nc += 1
        
         
     def plot_mesh(self):
@@ -60,10 +64,14 @@ class GranularMaterial:
 
         # Walk each face boundary using circulate_face -> vertex ids
         for f in m.faces():
+            #fig, ax = plt.subplots()
+            #ax.set_aspect("equal")
             vs = list(m.circulate_face(f, mode="v"))
+            print(vs)
             xs = [pos[v][0] for v in vs] + [pos[vs[0]][0]]
             ys = [pos[v][1] for v in vs] + [pos[vs[0]][1]]
             ax.plot(xs, ys, linewidth=1.2)
+            plt.show()
 
         ax.set_title("Mesh")
         #ax.set_xlabel("x"); ax.set_ylabel("y")

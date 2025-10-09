@@ -137,7 +137,6 @@ def clip_voronoi_cell_vertices(
     ]
     if not polys:
         return []
-    print(polys)
 
     out = []
     for poly in polys:
