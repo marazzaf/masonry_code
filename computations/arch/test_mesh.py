@@ -42,11 +42,14 @@ def three_touching_hexes(R=1.0):
         m.add_face(make_hexagon(cxy, R, orientation=np.pi/2))
 
     # Glue coincident boundaries so neighbors share one edge
-    hmesh.stitch(m)
+    #hmesh.stitch(m)
     return m
 
 #Test example
 m = three_touching_hexes(R=1.0)
+
+#Stitch all doubled vertices of mesh together
+hmesh.stitch(m,rad=1e-5)
 print(f"Cells: {len(list(m.faces()))}, Vertices: {len(list(m.vertices()))}")
 
 #Loop through edges
@@ -78,8 +81,8 @@ def print_edge_to_cells(m: hmesh.Manifold):
         print(f"edge ({v0}, {v1}) -> cells {faces}" + ("  [boundary]" if is_bdy else ""))
 
 #Loop through edges of the mesh
-print_edge_to_cells(m)
-sys.exit()
+#print_edge_to_cells(m)
+#sys.exit()
 
 #Plot
 import matplotlib.pyplot as plt
